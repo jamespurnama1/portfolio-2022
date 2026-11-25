@@ -261,16 +261,19 @@ const load = ref(0)
 const showVid = ref(false)
 const thumbLoaded = () => {
   imagesCount.value += 1
-  load.value = 90 / (postsWithThumbnails.value.length - 1)
+  load.value = 90 / (postsWithThumbnails.value.length || 1)
+  const newLoadHome = Math.min(100, store.loadHome + load.value)
   store.$patch({
-    loadHome: store.loadHome + load.value,
+    loadHome: newLoadHome,
   })
 
+  // Once all images load, complete the load stage
   if (
+    postsWithThumbnails.value.length > 0 &&
     postsWithThumbnails.value.length === imagesCount.value + 1 &&
     routePath.value === '/'
   ) {
-    // objs = Array(posts.value.length - 1).fill({ dist: 0 })
+    store.$patch({ loadHome: 100 })
     sketch.handleImages()
   }
 }
@@ -531,6 +534,12 @@ const checkReady = computed(() => {
 })
 onMounted(() => {
   init()
+  // Fallback: if loading stalls, complete it after 10 seconds
+  setTimeout(() => {
+    if (store.loadHome < 100) {
+      store.$patch({ loadHome: 100 })
+    }
+  }, 10000)
   if (
     window.matchMedia &&
     window.matchMedia('(prefers-color-scheme: light)').matches
