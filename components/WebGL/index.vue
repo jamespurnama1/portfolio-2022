@@ -53,13 +53,13 @@
         </li>
       </ul>
       <div id="wrap" class="hide">
-        <span v-if="posts && posts.length > 0">
-          <video v-if="posts[0]?.thumbnail?.asset?.url" id="reel" class="cardImg" autoplay muted playsinline loop preload="auto" crossorigin="anonymous">
-            <source :src="posts[0].thumbnail.asset.url" />
+        <span v-if="postsWithThumbnails.length > 0">
+          <video v-if="postsWithThumbnails[0]?.thumbnail?.asset?.url" id="reel" class="cardImg" autoplay muted playsinline loop preload="auto" crossorigin="anonymous">
+            <source :src="postsWithThumbnails[0].thumbnail.asset.url" />
           </video>
           <!-- work.thumbnail.asset.url -->
-          <img v-for="(work, index) in posts.slice(1)" :key="index" v-if="work.thumbnail?.asset?.url" crossorigin="anonymous" class="cardImg"
-            :src="work.thumbnail?.asset?.url"
+          <img v-for="(work, index) in postsWithThumbnails.slice(1)" :key="work._id" crossorigin="anonymous" class="cardImg"
+            :src="work.thumbnail.asset.url"
             :alt="work.title" @load="thumbLoaded()" />
         </span>
       </div>
@@ -118,6 +118,9 @@ const persistent = ref(false)
 const loaded = ref(false)
 const loadedDelay = ref(false)
 const attached = ref(false)
+const postsWithThumbnails = computed(() => 
+  posts.value.filter(p => p?.thumbnail?.asset?.url)
+)
 
 function next() {
   grain.in()
