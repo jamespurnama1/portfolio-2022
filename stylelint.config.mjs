@@ -11,7 +11,8 @@ export default {
     },
   ],
   rules: {
-    'at-rule-no-unknown': null, // Disable the default rule for unknown at-rules
-    'scss/at-rule-no-unknown': true, // Enable the SCSS rule for at-rules
+    'at-rule-no-unknown': null,
+    'scss/at-rule-no-unknown': true,
+    "at-rule-prelude-no-invalid": null
   },
 }

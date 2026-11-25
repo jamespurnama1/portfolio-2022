@@ -728,7 +728,7 @@ ul {
       height: 1em;
       width: 0.25em;
       margin: 0.5em;
-      border-radius: 1em/1em;
+      border-radius: 1em / 1em;
       background-color: var(--color);
       transition: transform 0.5s ease, color 0.5s ease, margin 0.5s ease;
     }
