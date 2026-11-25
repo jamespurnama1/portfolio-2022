@@ -27,98 +27,76 @@
     </NuxtLink>
     <div ref="content" class="ml-12 w-[calc(100vw-2.5em)]">
       <client-only>
-        <div class="relative top-0 -left-12 w-screen overflow-hidden z-10 mb-4">
-          <video v-if="posts" muted="true" autoplay loop playsinline preload="true"
-            class="hero w-full max-h-[56.3vw] h-auto object-cover top-0 -z-10"
-            :src="posts[index].thumbnail.asset.url" />
-        </div>
-        <div class="pin ml-4 mr-8 md:mx-16 relative max-w-6xl lg:mx-auto">
-          <div
-            class="info flex relative items-center flex-col md:mx-16 ml-4 mr-8 mb-2 md:mb-4 md:flex-row md:items-start gap-4 md:gap-12 md:justify-between pointer-events-none text-black dark:text-white max-w-6xl">
-            <!-- description -->
-            <p v-if="posts[index].description" class="relative lg:w-[80ch] lg:max-w-[50vw]">
-              {{ posts[index].description }}
-            </p>
-            <!-- Tools / Role / Link / Year / Type -->
-            <div class="flex flex-col md:gap-8 w-full md:w-[initial]">
-              <div class="grid grid-rows-[2fr_1fr_2fr] grid-cols-[minmax(1fr, 2fr)_1fr] md:gap-2 mb-0">
-                <div class=" row-span-2">
-                  <h4 class="font-bold">tools used</h4>
-                  <p>
-                    {{ posts[index].tools.map(String).join(', ') }}
-                  </p>
+        <template v-if="post">
+          <div class="top">
+            <video v-if="heroVideo" muted autoplay loop playsinline preload="auto" class="hero" :src="heroVideo" />
+            <img v-else-if="post.thumbnailImage" class="hero" :src="post.thumbnailImage" :alt="post.title" />
+            <div class="info">
+              <p v-if="post.description" class="desc">
+                {{ post.description }}
+              </p>
+              <div class="details">
+                <div class="grid">
+                  <div>
+                    <h4>tools used</h4>
+                    <p>
+                      {{ (post.tools || []).join(',') }}
+                    </p>
+                  </div>
+                  <div>
+                    <h4>role</h4>
+                    <p>
+                      {{ (post.role || []).join(',') }}
+                    </p>
+                  </div>
+                  <div>
+                    <h4>type</h4>
+                    <p>
+                      {{ post.type }}
+                    </p>
+                  </div>
+                  <div>
+                    <h4>year</h4>
+                    <p>
+                      {{ post.year }}
+                    </p>
+                  </div>
                 </div>
-                <div class=" col-start-2" :class="[posts[index].link ? '' : 'row-span-2']">
-                  <h4 class="font-bold">role</h4>
-                  <p>
-                    {{ posts[index].role.map(String).join(', ') }}
-                  </p>
-                </div>
-                <NuxtLink v-if="posts[index].link" class="pointer-events-auto col-start-2 self-center" external
-                  :to="posts[index].link">
-                  <button class="external font-bold text-black dark:text-white hover:underline"
-                    v-posthog-capture="'visit real project'" :aria-label="`visit ${posts[index].title}`">
+                <NuxtLink v-if="post.link" external :to="post.link">
+                  <button class="external" :aria-label="`visit ${post.title}`">
                     <h4>
                       visit website
                       <font-awesome class="icon" icon="arrow-up-right-from-square" />
                     </h4>
                   </button>
                 </NuxtLink>
-                <div class="">
-                  <h4 class="font-bold">type</h4>
-                  <p>
-                    {{ posts[index].type }}
-                  </p>
-                </div>
-                <div class="">
-                  <h4 class="font-bold">year</h4>
-                  <p>
-                    {{ posts[index].year }}
-                  </p>
-                </div>
               </div>
             </div>
           </div>
-          <!-- Carousel -->
-          <div ref="horizontal" class="pointer-events-none md:pl-4 md:pr-8 md:px-16 md:mask-left-right left-0 w-full">
-            <div v-if="posts[index].carousel && posts[index].carousel.length" ref="carousel"
-              class="flex flex-col md:flex-row gap-4 md:gap-0 overflow-x-hidden w-full h-auto md:w-fit md:h-[50vh]">
-              <span class="h-full md:mr-4 select-none md:last:mr-0" v-for="carousel in posts[index].carousel"
-                :key="carousel.image.asset ? carousel.image.asset._id : carousel.video.asset._id">
-                <video class="w-full h-auto md:h-full md:w-auto object-contain max-w-[80vw]"
-                  v-if="carousel.video.asset" ref="carouselVid" muted autoplay loop playsinline preload=true
-                  :src="carousel.video.asset.url" />
-                <NuxtImg provider="sanity" sizes="50vw md:75vw lg:100vw" :modifiers="{ fit: 'crop' }"
-                  class="w-full h-auto md:h-full md:w-auto object-contain max-w-[80vw]" v-else
-                  :src="carousel.image.asset._id" :alt="carousel.image.asset._id" @load="e => incrementCounter(e)"
-                  @error="onError()" />
-              </span>
+          <div class="pin">
+            <div v-if="post.carousel?.length" ref="horizontal" class="horizontal">
+              <div ref="carousel" class="slide">
+                <span v-for="item in post.carousel" :key="item._key">
+                  <img :src="item.url" :alt="item.alt || post.title" />
+                </span>
+              </div>
+            </div>
+            <template v-for="item in sections" :key="item._key">
+              <div class="pinned" :class="{ attached: item.attachToTop }">
+                <h3 v-if="item.headline">{{ item.headline }}</h3>
+                <p v-if="item.body">{{ item.body }}</p>
+                <video v-if="item.video" muted autoplay loop playsinline preload="auto" :src="item.video" />
+                <img v-else-if="sectionImage(item)" :src="sectionImage(item)!" :alt="item.caption || item.headline || post.title">
+              </div>
+            </template>
+            <div class="spacer">
+              <h4 @click="next">
+                <font-awesome class="icon arrowDown" icon="arrow-down" />
+                next project: {{ nextWorkTitle.toLowerCase() }}
+              </h4>
             </div>
           </div>
-          <!-- Contents -->
-          <div class="flex flex-col gap-4 md:gap-12 pt-4 md:pt-[calc(25vh+48px)]">
-            <div class="pinned flex flex-col text-black dark:text-white" v-for="item in posts[index].content">
-              <h3 class="font-bold text-2xl" v-if="item.headline">{{ item.headline }}</h3>
-              <video v-if="item.video.asset" :muted="item.caption === 'autoplay'"
-                :autoplay="item.caption === 'autoplay'" :loop="item.caption === 'autoplay'"
-                :controls="item.caption !== 'autoplay'" playsinline :src="item.video.asset.url" />
-              <NuxtImg provider="sanity" sizes="50vw md:75vw lg:100vw" :modifiers="{ fit: 'crop' }"
-                v-else-if="!store.dark && item.imageLight.asset" :src="item.imageLight.asset._id" :alt="item.caption"
-                @load="e => incrementCounter(e)" @error="onError()" />
-              <NuxtImg provider="sanity" sizes="50vw md:75vw lg:100vw" :modifiers="{ fit: 'crop' }" v-else
-                :src="item.image.asset._id" :alt="item.caption" @load="e => incrementCounter(e)" @error="onError()" />
-              <p class="mt-3 mb-2 md:max-w-[75ch]" v-if="item.body">{{ item.body.replace(/\s(?=\S*$)/, '&nbsp;') }}
-              </p>
-            </div>
-          </div>
-          <!-- Next Project -->
-          <div class="h-[40vh] flex flex-col justify-center items-center text-black dark:text-white">
-            <h4 class="cursor-pointer pointer-events-auto hover:underline" @click="next">
-              <font-awesome class="icon arrowDown" icon="arrow-down" />
-              next project: {{ nextWorkTitle.toLowerCase() }}
-            </h4>
-          </div>
-        </div>
+        </template>
       </client-only>
     </div>
   </div>
@@ -128,11 +106,9 @@
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useStore } from '~/store'
+import type { Content, Post } from '~/types/queries'
 
-definePageMeta({
-  name: 'works'
-})
-
+const width = ref(window.innerWidth)
 const noBoxes = 25
 const route = useRoute()
 const router = useRouter()
@@ -153,41 +129,81 @@ const waitUntil = (condition) => {
 /**
  * Get Data
  */
-const id = ref('')
+const data = reactive({ title: '' })
+const post = ref<Post | null>(null)
+const heroVideo = computed(
+  () => post.value?.heroVideo || post.value?.thumbnailVideo || null
+)
+// Skip sections that have nothing to show (e.g. a deleted asset)
+const sections = computed(() =>
+  (post.value?.content || []).filter(
+    (item) => item.image || item.imageLight || item.video || item.headline || item.body
+  )
+)
+// Light-theme artwork is used when the site is in light mode
+function sectionImage(item: Content) {
+  return (!store.dark && item.imageLight) || item.image || item.imageLight
+}
 const load = ref(0)
 const index = ref(1)
+
 const nextWork = ref('')
 const nextWorkTitle = ref('')
 const counter = ref(0);
 const len = ref(0);
 
+// Resolves once every image/video in the page has loaded (or failed), so one
+// broken asset can't keep the page hidden.
+async function waitForMedia() {
+  await waitUntil(() => document.querySelector('#container2 .top'))
+  await nextTick()
+  const els = Array.from(
+    document.querySelectorAll<HTMLImageElement | HTMLVideoElement>(
+      '#container2 img, #container2 video'
+    )
+  )
+  let counter = 0
+  await new Promise<void>((resolve) => {
+    const done = () => {
+      counter++
+      load.value = 100 * (counter / els.length)
+      store.$patch({ loadWorks: load.value })
+      if (counter === els.length) resolve()
+    }
+    if (!els.length) return resolve()
+    els.forEach((el) => {
+      const isImg = el instanceof HTMLImageElement
+      if (isImg ? el.complete : el.readyState >= 2) return done()
+      el.addEventListener(isImg ? 'load' : 'loadeddata', done, { once: true })
+      el.addEventListener('error', done, { once: true })
+    })
+  })
+}
+
 async function pushTo() {
   await waitUntil(() => store.posts.length > 1)
-  const [getID] = store.posts.filter((obj) => {
-    return obj.slug.current === routePath.value.substring(1)
-  })
+  const getID = store.posts.find(
+    (obj) => obj.slug.current === routePath.value.substring(1)
+  )
   if (!getID) {
     showError({ statusCode: 404 })
     navigateTo({ path: '/404' })
-  } else {
-    id.value = getID.slug.current
-    index.value = store.posts.indexOf(getID)
-    nextWork.value =
-      store.posts.length === index.value + 1
-        ? store.posts[1].slug.current
-        : store.posts[index.value + 1].slug.current
-    nextWorkTitle.value =
-      store.posts.length === index.value + 1
-        ? store.posts[1].title
-        : store.posts[index.value + 1].title
-
-    if (store.posts) {
-      nextTick(() => {
-        const imgs = document.images
-        len.value = imgs.length
-      })
-    }
+    return
   }
+  post.value = getID
+  data.title = getID.title
+  index.value = store.posts.indexOf(getID)
+  // skip the reel (index 0) when cycling through projects
+  const next = store.posts[index.value + 1] || store.posts[1]
+  nextWork.value = next.slug.current
+  nextWorkTitle.value = next.title
+
+  await waitForMedia()
+  await waitUntil(() => store.loaded)
+  await wait(1000)
+  init()
+  load.value = 100
+  store.$patch({ loadWorks: load.value })
 }
 
 async function incrementCounter(_event) {
@@ -321,33 +337,68 @@ function init() {
     /**
      * Carousel
      */
-    if (!content.value || !horizontal.value) return
+    if (carousel.value && horizontal.value) {
+      const tl = gsap
+        .timeline({ paused: true })
+        .to(carousel.value, {
+          x: () => -carouselWidth.value + horizontalWidth.value,
+          ease: 'power1.inOut',
+        })
+        .to(
+          '.background',
+          {
+            opacity: 0.2,
+          },
+          '<'
+        )
 
-    tl = gsap.timeline({ paused: true });
-    tl.to(carousel.value, {
-      x: () => -carouselWidth() + horizontalWidth.value,
-      ease: 'power1.inOut',
-    })
-      .to(
-        '.background',
-        {
-          opacity: 0.2,
-        },
-        '<'
-      );
-
-    ScrollTrigger.create({
-      trigger: horizontal.value,
-      scroller: 'body',
-      start: 'top 20%',
-      end: () => `+=${carouselWidth() - 5}px`,
-      scrub: true,
-      // anticipatePin: 1,
-      pin: true,
-      // pinType: 'fixed',
-      invalidateOnRefresh: true,
-      animation: tl,
-    });
+      ScrollTrigger.create({
+        scroller: '#__nuxt',
+        trigger: '.horizontal',
+        start: 'top 20%',
+        end: () => `+=${carouselWidth.value - 5}`,
+        scrub: 1,
+        // markers: true,
+        pin: '.content',
+        pinType: 'fixed',
+        pinSpacing: false,
+        invalidateOnRefresh: true,
+        animation: tl,
+      })
+    }
+    // gsap.timeline({ paused: true }).to('.arrowUp', {
+    //   rotate: '180deg',
+    //   scrollTrigger: {
+    //     snap: {
+    //       snapTo: 0,
+    //       duration: { min: 0.5, max: 1 },
+    //       delay: 0.5,
+    //     },
+    //     scrub: 1,
+    //     scroller: '#__nuxt',
+    //     trigger: '.spacer',
+    //     markers: true,
+    //     start: 'top bottom',
+    //     end:  '+=400',
+    //     onScrubComplete: ({ progress, direction }) => {
+    //       if (progress === 1 && direction === 1) {
+    //         gsap.to('.pinned', { y: '-100vw' })
+    //       }
+    //     },
+    //   }
+    // })
+    // loaded.value = true
+    // gsap.to('.loadingWorks', {
+    //   opacity: 0,
+    //   duration: 1,
+    // })
+    // gsap.to('.content', {
+    //   opacity: 1,
+    //   duration: 1,
+    // })
+    gsap.to('#container2', {
+      opacity: 1,
+      duration: 1,
     })
   }
 }
@@ -367,7 +418,16 @@ onUnmounted(() => {
   gsap.to('.background', {
     opacity: 1,
   })
-  document.documentElement.style.overflowY = 'hidden'
+  // When moving between projects the next page may already be mounted;
+  // only restore scrolling if no project page is left.
+  if (!document.querySelector('#container2')) {
+    ; (document.querySelector('#__nuxt') as HTMLDivElement).style.overflowY =
+      'initial'
+  }
+  window.removeEventListener('resize', checkMarquee02, true)
+  // store.$patch({
+  //   loadWorks: 0,
+  // })
 })
 
 function next() {

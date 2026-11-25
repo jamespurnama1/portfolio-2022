@@ -11,9 +11,8 @@ export default {
     },
   ],
   rules: {
-    'import-notation': null,
-    "media-feature-name-no-vendor-prefix": null,
-    'at-rule-no-unknown': null, // Disable the default rule for unknown at-rules
-    // 'scss/at-rule-no-unknown': true, // Enable the SCSS rule for at-rules
+    'at-rule-no-unknown': null,
+    'scss/at-rule-no-unknown': true,
+    "at-rule-prelude-no-invalid": null
   },
 }

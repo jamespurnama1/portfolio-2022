@@ -2,106 +2,71 @@ import type { Post, About } from '~/types/queries'
 
 const queries = {
   landing: groq`{
-    "post":  *[_type == "post" && !(_id in path('drafts.**'))] | order(index asc) {
-      _id,
-      _rev,
-        _type,
-      title,
-      description,
-      type,
-      role,
-      color,
-      content[] {
-        "image": {
-          "asset": image.asset->{
-            _id,
-            url,
-            originalFilename,
-            size
-          }
-        },
-        "imageLight": {
-          "asset": imageLight.asset->{
-            _id,
-            url,
-            originalFilename,
-            size
-          }
-        },
-        "video": {
-          "asset": video.asset->{
-            _id,
-            url,
-            originalFilename,
-            size
-          }
-        },
-        headline,
-        body,
-        caption
-      },
-      carousel[] {
-        "image": {
-          "asset": image.asset->{
-            _id,
-            url,
-            originalFilename,
-            size
-          }
-        },
-        "video": {
-          "asset": video.asset->{
-            _id,
-            url,
-            originalFilename,
-            size
-          }
-        },
-        alt,
-      },
-      link,
-      slug,
-      year,
-      tools,
-      awards[] {
-        "icon": {
-          "asset": icon.asset->{
-            _id,
-            url,
-            originalFilename,
-            size
-          }
-        },
-        gold,
-        silver,
-        bronze,
-        crystal,
-        issuer,
-        index
-      },
-      "thumbnail": {
-        "asset": thumbnail.asset->{
-          _id,
-          url,
-          originalFilename,
-          size
-        }
-      },
-      "thumbnailImage": {
-        "asset": thumbnailImage.asset->{
-          _id,
-          url,
-          originalFilename,
-          size
-        }
-      },
-      _createdAt,
-      _updatedAt
-    }
-  }`,
-  about: groq`{
-    "about" : *[_type == "about"]{
-      _type,
+  "post":  *[_type == "post"] | order(index asc) {
+  _id,
+  _rev,
+  _type,
+  title,
+  description,
+  type,
+  role,
+  color,
+  theme,
+  aiInvolvement,
+  aiDescription,
+  "thumbnailVideo": thumbnail.asset->url,
+  "thumbnailImage": thumbnailImage.asset->url,
+  "heroVideo": heroMedia.asset->url,
+  "carousel": carousel[defined(image.asset->url)] {
+    _key,
+    alt,
+    "url": image.asset->url
+  },
+  "content": content[] {
+    _key,
+    headline,
+    body,
+    caption,
+    attachToTop,
+    "image": image.asset->url,
+    "imageLight": imageLight.asset->url,
+    "video": video.asset->url
+  },
+  link,
+  slug,
+  year,
+  tools,
+  awards[] {
+    "icon": {
+      "asset": icon.asset->{
+        _id,
+        url,
+        originalFilename,
+        size
+      }
+    },
+    gold,
+    silver,
+    bronze,
+    crystal,
+    issuer,
+    index
+  },
+  _createdAt,
+  _updatedAt
+}
+}`,
+  about: groq`
+{
+"about" : *[_type == "about"]{
+  _type,
+  _id,
+  _createdAt,
+  _updatedAt,
+  _rev,
+  title,
+  "image": {
+      "asset": image.asset->{
       _id,
       _createdAt,
       _updatedAt,

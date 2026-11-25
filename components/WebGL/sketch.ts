@@ -118,7 +118,7 @@ export default class Sketch {
     const images = [
       ...(document.querySelectorAll(
         '.cardImg',
-      ) as NodeListOf<HTMLImageElement>),
+      ) as NodeListOf<HTMLImageElement | HTMLVideoElement>),
     ]
 
     images.forEach((str, index) => {
@@ -146,6 +146,23 @@ export default class Sketch {
       // aspect-ratio 1.5
       that.materials.push(mat)
       const group = new THREE.Group()
+      // const loader = new THREE.TextureLoader()
+      // const t: Array<Texture> = []
+      // // images.forEach((image) => {
+      // loader.load(str.src, function (m) {
+      //   t.push(m)
+      // })
+      // })
+      const card = images[index]
+      mat.uniforms.texture1.value =
+        card instanceof HTMLVideoElement
+          ? new THREE.VideoTexture(card)
+          : new THREE.Texture(card)
+      mat.uniforms.texture1.value.needsUpdate = true
+      // mat.uniforms.texture1.wrapS = THREE.ClampToEdgeWrapping
+      // mat.uniforms.texture1.wrapT = THREE.RepeatWrapping
+
+      // aspect-ratio 1.5
       const geo = new THREE.PlaneBufferGeometry(1.5, 1, 20, 20)
       const mesh = new THREE.Mesh(geo, mat)
       mesh.name = index.toString()

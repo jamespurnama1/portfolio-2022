@@ -81,13 +81,6 @@ function next() {
 }
 
 onMounted(() => {
-  if (navigator.userAgent.includes('Safari')) {
-    ; (document.querySelector(
-      '.loading button'
-    ) as HTMLButtonElement)!.style.maskSize =
-      window.innerWidth >= 1280 ? '18.79em' : '6.74em 3em'
-  }
-
   window.addEventListener('keydown', (event) => {
     if ((fullReady && event.key === 'Enter') || event.key === 'Space') {
       next()
@@ -141,12 +134,101 @@ svg.lottieLoading {
   max-width: 6em;
 }
 
-@media (width >=96rem
-  /* 1536px */
-) {
-  /* stylelint-disable-next-line selector-class-pattern */
-  svg.lottieLoading {
-    max-width: 12em;
+<style lang="scss" scoped>
+.loading {
+  position: fixed;
+  z-index: 1000;
+  width: 100vw;
+  height: 100vh;
+  height: calc(100vh - env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column-reverse;
+
+  .anim {
+    position: absolute;
+    display: flex;
+    flex-flow: column-reverse;
+    margin: auto;
+    align-items: center;
+    justify-content: center;
+
+    p {
+      margin-top: 2em;
+      color: var(--color);
+    }
+  }
+
+  .content-item {
+    position: relative;
+    overflow: hidden;
+
+    &:last-child {
+      // same width as the arrow button inside
+      width: 5.74em;
+
+      @include min-media(desktop) {
+        width: 15.31em;
+      }
+    }
+
+    h2 {
+      font-size: 3em;
+
+      @include min-media(desktop) {
+        font-size: 8em;
+      }
+    }
+  }
+
+  button {
+    height: 3em;
+    width: 5.74em;
+    border: none;
+    mask-repeat: repeat-x;
+    mask-position: 0 50%;
+    mask-size: 5.74em 3em;
+    mask-image: url("@/assets/arrow.svg");
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+
+    @keyframes next {
+      from {
+        mask-position: 0 50%;
+      }
+
+      to {
+        mask-position: 5.74em 50%;
+      }
+    }
+
+    @include min-media(desktop) {
+      height: 8em;
+      width: 15.31em;
+      mask-size: 15.31em 8em;
+
+      @keyframes next {
+        from {
+          mask-position: 0 50%;
+        }
+
+        to {
+          mask-position: 15.31em 50%;
+        }
+      }
+    }
+
+    &:hover {
+      animation: next 0.5s;
+    }
+
+    div {
+      width: 100%;
+      height: 100%;
+      background-color: var(--color);
+    }
   }
 }
 </style>

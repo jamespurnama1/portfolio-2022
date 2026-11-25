@@ -9,6 +9,7 @@ export const useStore = defineStore('main', {
     loadWorks: 0 as number,
     loadWebGL: 0 as number,
     loaded: false as boolean,
+    dark: true as boolean,
     posts: [{}] as Post[],
     slugs: [] as string[],
     about: {} as About
@@ -16,7 +17,11 @@ export const useStore = defineStore('main', {
   actions: {
     async fetchPosts() {
       try {
-        this.posts = (await fetchSanity('landing')).post as Post[]
+        // Posts without any thumbnail can't be shown as a card, so they are
+        // left out to keep cards, nav, and slugs index-aligned.
+        this.posts = ((await fetchSanity('landing')).post as Post[]).filter(
+          (post) => post.thumbnailVideo || post.thumbnailImage
+        )
         for (let i = 0; i < this.posts.length; i++) {
           this.slugs.push(this.posts[i].slug.current)
         }

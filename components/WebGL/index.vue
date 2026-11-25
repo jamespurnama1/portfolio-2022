@@ -30,10 +30,9 @@
       </div>
     </transition>
     <transition name="fade">
-      <div v-if="showVid"
-        class="absolute flex z-50 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 w-screen h-safe-height items-center justify-center">
-        <video controls class="reel-overlay max-w-[80%] max-h-[80%]">
-          <source :src="posts[0].thumbnail.asset.url" />
+      <div v-if="showVid && posts[0]?.thumbnailVideo" class="over">
+        <video controls class="reel-overlay">
+          <source :src="posts[0].thumbnailVideo" />
         </video>
         <div class="absolute bg-black opacity-90 w-screen h-screen z-[-1]" @click="hideVideo()" />
       </div>
@@ -66,15 +65,15 @@
           </transition>
         </li>
       </ul>
-      <div class="opacity-0 pointer-events-none absolute max-w-[50vw] max-h-[50vh]">
-        <span v-if="posts && posts.length > 0">
-          <video id="reel" class="cardImg relative h-1/2 w-auto" autoplay muted playsinline loop preload="auto"
-            crossorigin="anonymous">
-            <source :src="posts[0].thumbnail.asset.url" />
-          </video>
-          <NuxtImg provider="sanity" sizes="50vw md:75vw lg:100vw" v-for="(work, index) in posts.slice(1)"
-            :modifiers="{ fit: 'crop' }" :key="index" crossorigin="anonymous" class="cardImg"
-            :src="work.thumbnailImage.asset._id" :alt="work.title" @load="thumbLoaded()" />
+      <div id="wrap" class="hide">
+        <span v-if="posts.length > 0">
+          <template v-for="work in posts" :key="work._id">
+            <video v-if="work.thumbnailVideo && !failedVideos[work._id]" class="cardImg" muted playsinline loop
+              preload="auto" crossorigin="anonymous" :src="work.thumbnailVideo" @loadeddata="thumbLoaded()"
+              @error="videoFailed(work)" />
+            <img v-else class="cardImg" crossorigin="anonymous" :src="work.thumbnailImage || undefined"
+              :alt="work.title" @load="thumbLoaded()" @error="thumbLoaded()" />
+          </template>
         </span>
       </div>
       <transition name="fade" mode="out-in">
@@ -92,8 +91,8 @@
             @click="!attractTo ? clicked(attractTo) : null">
             {{ posts[attractTo].title.toLowerCase() }}
           </h2>
-          <p v-if="attractTo" class="!leading-none text-sm md:text-base 2xl:text-3xl">
-            {{ posts[attractTo].role[0] }}
+          <p v-if="attractTo" class="types">
+            {{ posts[attractTo].role?.[0] }}
             <span v-if="windowWidth > 600">
               <br />
               {{ posts[attractTo].type }}
@@ -117,7 +116,7 @@ import { gsap } from 'gsap'
 import Sketch from './sketch'
 import Grain from './grain'
 import { useStore } from '~/store'
-const { $clientPosthog } = useNuxtApp();
+import type { Post } from '~/types/queries'
 
 const store = useStore()
 const route = useRoute()
@@ -237,15 +236,17 @@ function lightTheme() {
     '--color': 'black',
     duration: 1,
   })
-  gsap.to(grain.material.uniforms.color3.value, {
-    r: 1,
-    g: 1,
-    b: 1,
-    duration: 1,
-  })
-  grain.material.uniforms.needsUpdate = true
-  store.dark = false
-  document.documentElement.setAttribute('data-theme', 'light')
+  if (grain) {
+    gsap.to(grain.material.uniforms.color3.value, {
+      r: 1,
+      g: 1,
+      b: 1,
+      duration: 1,
+    })
+    grain.material.uniforms.needsUpdate = true
+  }
+  dark.value = false
+  store.$patch({ dark: false })
 }
 
 function darkTheme() {
@@ -258,16 +259,17 @@ function darkTheme() {
     '--color': 'white',
     duration: 1,
   })
-  store.dark = true
-  document.documentElement.setAttribute('data-theme', 'dark')
-  if (!grain) return
-  gsap.to(grain.material.uniforms.color3.value, {
-    r: 0,
-    g: 0,
-    b: 0,
-    duration: 1,
-  })
-  grain.material.uniforms.needsUpdate = true
+  if (grain) {
+    gsap.to(grain.material.uniforms.color3.value, {
+      r: 0,
+      g: 0,
+      b: 0,
+      duration: 1,
+    })
+    grain.material.uniforms.needsUpdate = true
+  }
+  dark.value = true
+  store.$patch({ dark: true })
 }
 
 function checkProjectTheme() {
@@ -320,27 +322,40 @@ let sketch
 const imagesCount = ref(0)
 const load = ref(0)
 const showVid = ref(false)
+// Only the active card's video plays; the others hold their last frame.
+function syncCardPlayback() {
+  document.querySelectorAll('.cardImg').forEach((el, i) => {
+    if (!(el instanceof HTMLVideoElement)) return
+    if (routePath.value === '/' && i === attractTo.value) {
+      el.play().catch(() => {})
+    } else {
+      el.pause()
+    }
+  })
+}
+watch([attractTo, routePath], syncCardPlayback)
+
+// A video that can't be decoded falls back to the post's thumbnail image
+const failedVideos = reactive<Record<string, boolean>>({})
+function videoFailed(work: Post) {
+  if (work.thumbnailImage) failedVideos[work._id] = true
+  else thumbLoaded()
+}
+
 const thumbLoaded = () => {
   imagesCount.value += 1
-  load.value = (imagesCount.value / (posts.value.length - 1)) * 100
+  // fetching accounts for 10%, each card for an equal share of the other 90%
   store.$patch({
-    loadHome: load.value,
+    loadHome: Math.min(100, store.loadHome + 90 / posts.value.length),
   })
 
-  if (
-    posts.value.length === imagesCount.value + 1 &&
-    routePath.value === '/'
-  ) {
-    setTimeout(() => {
-      sketch.handleImages()
-    }, 1000);
+  if (imagesCount.value === posts.value.length && routePath.value === '/') {
+    sketch.handleImages()
+    syncCardPlayback()
   }
 }
 
 objs = Array(posts.value.length).fill({ dist: 0 })
-if (routePath.value !== '/' && routePath.value !== '/404') {
-  checkProjectTheme()
-}
 
 function dispose() {
   imagesCount.value = 0
@@ -389,6 +404,8 @@ function init() {
     window.matchMedia('(prefers-color-scheme: light)').matches
   ) {
     lightTheme()
+  } else if (routePath.value !== '/' && routePath.value !== '/404') {
+    checkProjectTheme()
   }
   raf()
   rafInit.value = true
@@ -419,17 +436,15 @@ function requestPerm() {
     'deviceorientation',
     (event) => {
       if (!event || !grain) return
-      const α = event.alpha ?? 0;
-      const β = event.beta ?? 0;
-      const γ = event.gamma ?? 0;
-
-      smoothed.α = smoothAngle(smoothed.α, α, smoothingFactor);
-      smoothed.β = smoothAngle(smoothed.β, β, smoothingFactor);
-      smoothed.γ = smoothAngle(smoothed.γ, γ, smoothingFactor);
-
-      grain.env.rotation.x = (-Math.abs(smoothed.α - 180) + 180) * 0.05;
-      grain.env.rotation.y = Math.abs(smoothed.β) * 0.05; 
-      grain.env.rotation.z = Math.abs(smoothed.γ) * 0.05;
+      disableMouse = true
+      const rot = (x) => (-Math.abs(x - 180) + 180) * 0.05
+      gsap.to(grain.env.rotation, {
+        x: rot(event.alpha!),
+        y: Math.abs(event.beta!) * 0.05,
+        z: Math.abs(event.gamma!) * 0.05,
+        duration: 1,
+        ease: 'power1',
+      })
     },
     false
   )
@@ -662,3 +677,220 @@ onUnmounted(() => {
   window.removeEventListener('resize', getWidth)
 })
 </script>
+
+<style lang="scss" scoped>
+.switcher {
+  z-index: 20;
+  position: fixed;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  top: 0;
+  left: 0;
+  border: 0;
+  cursor: pointer;
+
+  .icon {
+    margin: 3px;
+    transition: 0.5s ease;
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 1.5em;
+    height: 1em;
+    width: auto;
+    color: var(--bg);
+  }
+
+  .triangle {
+    transition: 0.5s ease;
+    height: 0;
+    width: 0;
+    border-style: solid;
+    border-width: 0 0 3.5em 3.5em;
+    border-color: transparent transparent transparent var(--color);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .switcher:hover {
+      .triangle {
+        border-width: 0 0 5em 5em;
+      }
+
+      .icon {
+        transform: scale(1.5) translate(5px, 5px);
+      }
+    }
+  }
+
+  span {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}
+
+.background,
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: calc(100vh - env(safe-area-inset-bottom));
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+
+  canvas {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.container {
+  z-index: 50;
+}
+
+.over {
+  position: absolute;
+  display: flex;
+  z-index: 500;
+  transform: translate(50%, 50%);
+  top: -50vh;
+  left: -50vw;
+  width: 100vw;
+  height: 100vh;
+  height: calc(100vh - env(safe-area-inset-bottom));
+  justify-content: center;
+  align-items: center;
+
+  .reel-overlay {
+    max-width: 80%;
+    max-height: 80%;
+  }
+
+  .dim {
+    position: absolute;
+    background-color: black;
+    opacity: 0.9;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+}
+
+.clip {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  height: calc(100vh - env(safe-area-inset-bottom));
+  top: 0;
+}
+
+#wrap {
+  max-width: 50vw;
+  max-height: 50vh;
+  position: absolute;
+
+  &.hide {
+    opacity: 0;
+  }
+
+  video {
+    position: relative;
+    height: 50vh;
+    width: auto;
+  }
+
+  span {
+    display: none;
+  }
+}
+
+ul {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 2em;
+  z-index: 100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+
+  li {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    opacity: 0.3;
+
+    .bullet {
+      height: 1em;
+      width: 0.25em;
+      margin: 0.5em;
+      border-radius: 1em / 1em;
+      background-color: var(--color);
+      transition: transform 0.5s ease, color 0.5s ease, margin 0.5s ease;
+    }
+
+    p {
+      font-size: 1em;
+      text-align: right;
+      line-height: 1.5em;
+    }
+
+    &.active {
+      opacity: 1;
+
+      .bullet {
+        transform: scaleY(1.5);
+      }
+
+      .active-length {
+        transform: scaleY(2.5);
+        margin: 2em 0.5em;
+      }
+    }
+  }
+}
+
+.title {
+  color: var(--color);
+  position: absolute;
+  left: 5%;
+  top: 47%;
+  text-align: right;
+  z-index: 5;
+  max-width: 20%;
+  cursor: pointer;
+
+  @include min-media(desktop) {
+    left: 25vw;
+  }
+
+  h2 {
+    font-size: 20px;
+    line-height: 20px;
+
+    @include min-media(mobile) {
+      font-size: 50px;
+      line-height: 40px;
+    }
+
+    @include min-media(wide) {
+      font-size: 70px;
+      line-height: 60px;
+    }
+  }
+
+  p {
+    font-size: 1em;
+
+    @include min-media(mobile) {
+      font-size: 1.2em;
+    }
+  }
+}
+</style>

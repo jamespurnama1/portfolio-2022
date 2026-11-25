@@ -10,32 +10,30 @@ export interface Post extends SanityDocument {
   _type: 'post'
   title: string
   description: string
-  carousel: {
-    image: {
-      asset: Asset
-    }
-    video: {
-      asset: Asset
-    }
-    alt: string
-  }[]
-  tools: string[]
+  tools: string[] | null
   type: string
-  role: string[]
+  role: string[] | null
   color: Color
+  theme: 'light' | 'dark' | null
+  aiInvolvement?: string | null
+  aiDescription?: string | null
   link: string
   year: number
   slug: Slug
-  thumbnail: {
-    asset: Asset
-  }
-  thumbnailImage: {
-    asset: Asset
-  }
+  thumbnailVideo: string | null
+  thumbnailImage: string | null
+  heroVideo: string | null
+  carousel: CarouselItem[] | null
   awards: Award[] | null
-  content: Content[]
+  content: Content[] | null
   catIndex?: number
   index?: number
+}
+
+export interface CarouselItem {
+  _key: string
+  alt: string | null
+  url: string
 }
 
 export interface About extends SanityDocument {
@@ -97,13 +95,12 @@ export interface Award {
 }
 
 export interface Content {
-  show_headline: boolean
-  _type: string
-  image: { asset: Asset }
-  imageLight: { asset: Asset }
-  video: { asset: Asset }
   _key: string
-  body: string
-  headline: string
-  caption: string
+  headline: string | null
+  body: string | null
+  caption: string | null
+  attachToTop: boolean | null
+  image: string | null
+  imageLight: string | null
+  video: string | null
 }
