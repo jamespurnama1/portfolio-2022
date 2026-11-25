@@ -58,8 +58,8 @@
             <source :src="posts[0].thumbnail.asset.url" />
           </video>
           <!-- work.thumbnail.asset.url -->
-          <img v-for="(work, index) in posts.slice(1)" :key="index" v-show="work.thumbnail?.asset?.url" crossorigin="anonymous" class="cardImg"
-            :src="work.thumbnail.asset.url"
+          <img v-for="(work, index) in posts.slice(1)" :key="index" v-if="work.thumbnail?.asset?.url" crossorigin="anonymous" class="cardImg"
+            :src="work.thumbnail?.asset?.url"
             :alt="work.title" @load="thumbLoaded()" />
         </span>
       </div>
