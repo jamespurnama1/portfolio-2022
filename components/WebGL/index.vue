@@ -24,7 +24,7 @@
       </div>
     </transition>
     <transition name="fade">
-      <div v-if="showVid" class="over">
+      <div v-if="showVid && posts[0]?.thumbnail?.asset?.url" class="over">
         <video controls class="reel-overlay">
           <source :src="posts[0].thumbnail.asset.url" />
         </video>
@@ -54,11 +54,11 @@
       </ul>
       <div id="wrap" class="hide">
         <span v-if="posts && posts.length > 0">
-          <video id="reel" class="cardImg" autoplay muted playsinline loop preload="auto" crossorigin="anonymous">
+          <video v-if="posts[0]?.thumbnail?.asset?.url" id="reel" class="cardImg" autoplay muted playsinline loop preload="auto" crossorigin="anonymous">
             <source :src="posts[0].thumbnail.asset.url" />
           </video>
           <!-- work.thumbnail.asset.url -->
-          <img v-for="(work, index) in posts.slice(1)" :key="index" crossorigin="anonymous" class="cardImg"
+          <img v-for="(work, index) in posts.slice(1)" :key="index" v-show="work.thumbnail?.asset?.url" crossorigin="anonymous" class="cardImg"
             :src="work.thumbnail.asset.url"
             :alt="work.title" @load="thumbLoaded()" />
         </span>
