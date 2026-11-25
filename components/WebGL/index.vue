@@ -365,7 +365,7 @@ function requestPerm() {
   window.addEventListener(
     'deviceorientation',
     (event) => {
-      if (!event && !grain) return
+      if (!event || !grain) return
       disableMouse = true
       const rot = (x) => (-Math.abs(x - 180) + 180) * 0.05
       gsap.to(grain.env.rotation, {
