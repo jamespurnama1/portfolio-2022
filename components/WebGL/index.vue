@@ -261,13 +261,13 @@ const load = ref(0)
 const showVid = ref(false)
 const thumbLoaded = () => {
   imagesCount.value += 1
-  load.value = 90 / (posts.value.length - 1)
+  load.value = 90 / (postsWithThumbnails.value.length - 1)
   store.$patch({
     loadHome: store.loadHome + load.value,
   })
 
   if (
-    posts.value.length === imagesCount.value + 1 &&
+    postsWithThumbnails.value.length === imagesCount.value + 1 &&
     routePath.value === '/'
   ) {
     // objs = Array(posts.value.length - 1).fill({ dist: 0 })
@@ -298,7 +298,7 @@ const thumbLoaded = () => {
 // store.posts.push(...(data.value.post as Post[]))
 // img.value = [...store.posts]
 // img.value.shift()
-objs = Array(posts.value.length).fill({ dist: 0 })
+objs = Array(postsWithThumbnails.value.length).fill({ dist: 0 })
 if (routePath.value !== '/' && routePath.value !== '/404') {
   checkProjectTheme()
 }
@@ -335,7 +335,7 @@ function clicked(index: number) {
   }
 }
 function init() {
-  objs = Array(posts.value.length - 1).fill({ dist: 0 })
+  objs = Array(postsWithThumbnails.value.length - 1).fill({ dist: 0 })
   sketch = new Sketch({
     dom: document.querySelector('.container'),
   })
