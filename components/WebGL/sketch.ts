@@ -121,43 +121,18 @@ export default class Sketch {
       ) as NodeListOf<HTMLImageElement | HTMLVideoElement>),
     ]
 
-    images.forEach((str, index) => {
+    images.forEach((card, index) => {
       const mat = that.material!.clone()
-      if (index === 0) {
-        const el = document.querySelector('#reel') as HTMLVideoElement
-        if (el) {
-          mat.uniforms.texture1.value = new THREE.VideoTexture(el)
-          mat.uniforms.textureSize.value = new THREE.Vector2(
-            el.videoWidth,
-            el.videoHeight,
-          )
-        }
-      } else {
-        const textureLoader = new THREE.TextureLoader()
-        textureLoader.load(str.src, (texture) => {
-          mat.uniforms.texture1.value = texture
-          mat.uniforms.textureSize.value = new THREE.Vector2(
-            str.naturalWidth,
-            str.naturalHeight,
-          )
-          mat.uniforms.texture1.value.needsUpdate = true
-        })
-      }
-      // aspect-ratio 1.5
+      const isVideo = card instanceof HTMLVideoElement
+      mat.uniforms.texture1.value = isVideo
+        ? new THREE.VideoTexture(card)
+        : new THREE.Texture(card)
+      mat.uniforms.textureSize.value = new THREE.Vector2(
+        isVideo ? card.videoWidth : card.naturalWidth,
+        isVideo ? card.videoHeight : card.naturalHeight,
+      )
       that.materials.push(mat)
       const group = new THREE.Group()
-      // const loader = new THREE.TextureLoader()
-      // const t: Array<Texture> = []
-      // // images.forEach((image) => {
-      // loader.load(str.src, function (m) {
-      //   t.push(m)
-      // })
-      // })
-      const card = images[index]
-      mat.uniforms.texture1.value =
-        card instanceof HTMLVideoElement
-          ? new THREE.VideoTexture(card)
-          : new THREE.Texture(card)
       mat.uniforms.texture1.value.needsUpdate = true
       // mat.uniforms.texture1.wrapS = THREE.ClampToEdgeWrapping
       // mat.uniforms.texture1.wrapT = THREE.RepeatWrapping

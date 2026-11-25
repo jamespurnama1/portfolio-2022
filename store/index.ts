@@ -9,7 +9,6 @@ export const useStore = defineStore('main', {
     loadWorks: 0 as number,
     loadWebGL: 0 as number,
     loaded: false as boolean,
-    dark: true as boolean,
     posts: [{}] as Post[],
     slugs: [] as string[],
     about: {} as About

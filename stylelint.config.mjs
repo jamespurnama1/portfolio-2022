@@ -1,4 +1,6 @@
 export default {
+  // build output is generated and minified
+  ignoreFiles: ['dist/**', '.output/**', '.nuxt/**'],
   extends: [
     'stylelint-config-standard',
     'stylelint-config-recommended-vue',
@@ -12,7 +14,8 @@ export default {
   ],
   rules: {
     'at-rule-no-unknown': null,
-    'scss/at-rule-no-unknown': true,
-    "at-rule-prelude-no-invalid": null
+    "at-rule-prelude-no-invalid": null,
+    // Tailwind v4 requires the plain `@import "tailwindcss"` form
+    "import-notation": null,
   },
 }

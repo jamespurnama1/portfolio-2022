@@ -2,16 +2,16 @@
   <div class="parent">
     <Loading :check-ready="checkReady" :ready="ready" @next="next" />
     <button aria-label="Switch dark/light theme" v-show="loaded && checkReady >= 100" v-posthog-capture="'switch theme'"
-      class="fixed z-[41] bg-transparent top-0 left-0 cursor-pointer group" @click="invert()">
+      class="fixed z-41 bg-transparent top-0 left-0 cursor-pointer group" @click="invert()">
       <transition name="slide-bottom" mode="out-in">
         <div v-if="store.dark" key="dark">
           <font-awesome
-            class="absolute top-0 left-0 text-2xl dark:text-black text-white m-[3px] transition-all duration-500 ease-in-out group-hover:scale-150 group-hover:translate-y-[5px] group-hover:translate-x-[5px]"
+            class="absolute top-0 left-0 text-2xl dark:text-black text-white m-0.75 transition-all duration-500 ease-in-out group-hover:scale-150 group-hover:translate-y-1.25 group-hover:translate-x-1.25"
             icon="sun" />
         </div>
         <div v-else key="light">
           <font-awesome
-            class="absolute top-0 left-0 text-2xl dark:text-black text-white m-[3px] transition-all duration-500 ease-in-out group-hover:scale-150 group-hover:translate-y-[5px] group-hover:translate-x-[5px]"
+            class="absolute top-0 left-0 text-2xl dark:text-black text-white m-0.75 transition-all duration-500 ease-in-out group-hover:scale-150 group-hover:translate-y-1.25 group-hover:translate-x-1.25"
             icon="moon" />
         </div>
       </transition>
@@ -87,7 +87,7 @@
         " :key="posts[attractTo]._id"
           class="title dark:text-white text-black duration-500 absolute md:-translate-x-1/2 -translate-y-1/2 left-5 md:left-[20%] top-1/2 md:text-right z-10 w-14 md:w-64 lg:w-72 2xl:w-96 cursor-pointer"
           @click="clicked(attractTo)">
-          <h2 class="!leading-[0.75] font-semibold text-xl md:text-lg lg:text-5xl 2xl:text-8xl"
+          <h2 class="leading-[0.75]! font-semibold text-xl md:text-lg lg:text-5xl 2xl:text-8xl"
             @click="!attractTo ? clicked(attractTo) : null">
             {{ posts[attractTo].title.toLowerCase() }}
           </h2>
@@ -100,7 +100,7 @@
             <br />
             {{ posts[attractTo].year }}
           </p>
-          <p class="!leading-none text-sm md:text-base 2xl:text-3xl" v-else>works in 2022</p>
+          <p class="leading-none! text-sm md:text-base 2xl:text-3xl" v-else>works in 2022</p>
         </div>
       </transition>
     </div>
@@ -120,6 +120,7 @@ import type { Post } from '~/types/queries'
 
 const store = useStore()
 const route = useRoute()
+const { $clientPosthog } = useNuxtApp()
 const { posts } = storeToRefs(store)
 const attractMode = ref(false)
 const attractTo = ref(0)
@@ -245,7 +246,6 @@ function lightTheme() {
     })
     grain.material.uniforms.needsUpdate = true
   }
-  dark.value = false
   store.$patch({ dark: false })
 }
 
@@ -268,7 +268,6 @@ function darkTheme() {
     })
     grain.material.uniforms.needsUpdate = true
   }
-  dark.value = true
   store.$patch({ dark: true })
 }
 
@@ -436,7 +435,6 @@ function requestPerm() {
     'deviceorientation',
     (event) => {
       if (!event || !grain) return
-      disableMouse = true
       const rot = (x) => (-Math.abs(x - 180) + 180) * 0.05
       gsap.to(grain.env.rotation, {
         x: rot(event.alpha!),
@@ -678,7 +676,7 @@ onUnmounted(() => {
 })
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .switcher {
   z-index: 20;
   position: fixed;
@@ -866,7 +864,7 @@ ul {
   max-width: 20%;
   cursor: pointer;
 
-  @include min-media(desktop) {
+  @media only screen and (width >= 80em) {
     left: 25vw;
   }
 
@@ -874,12 +872,12 @@ ul {
     font-size: 20px;
     line-height: 20px;
 
-    @include min-media(mobile) {
+    @media only screen and (width >= 37.5em) {
       font-size: 50px;
       line-height: 40px;
     }
 
-    @include min-media(wide) {
+    @media only screen and (width >= 120em) {
       font-size: 70px;
       line-height: 60px;
     }
@@ -888,7 +886,7 @@ ul {
   p {
     font-size: 1em;
 
-    @include min-media(mobile) {
+    @media only screen and (width >= 37.5em) {
       font-size: 1.2em;
     }
   }

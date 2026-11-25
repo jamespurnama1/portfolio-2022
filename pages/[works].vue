@@ -134,6 +134,24 @@ const post = ref<Post | null>(null)
 const heroVideo = computed(
   () => post.value?.heroVideo || post.value?.thumbnailVideo || null
 )
+const themeColor = computed(() => post.value?.color?.hex || '#000000')
+useSeoMeta({
+  title: () =>
+    post.value ? `${post.value.title} | James Henry Portfolio` : 'James Henry Portfolio',
+  themeColor: () => [
+    { content: themeColor.value, media: '(prefers-color-scheme: light)' },
+    { content: themeColor.value, media: '(prefers-color-scheme: dark)' },
+  ],
+  description: () => post.value?.description,
+  ogUrl: () => `https://jameshenry.site/${post.value?.slug.current ?? ''}`,
+  ogTitle: () =>
+    post.value ? `${post.value.title} | James Henry Portfolio` : 'James Henry Portfolio',
+  ogDescription: () => post.value?.description,
+  ogImage: () => post.value?.thumbnailImage,
+  twitterCard: 'summary_large_image',
+  twitterCreator: '@jamespurnama1',
+  twitterSite: '@jamespurnama1',
+})
 // Skip sections that have nothing to show (e.g. a deleted asset)
 const sections = computed(() =>
   (post.value?.content || []).filter(
@@ -287,26 +305,6 @@ const carouselVid = ref(null as NodeListOf<HTMLVideoElement> | null)
 
 function init() {
 
-  useSeoMeta({
-    title: () => `${store.posts[index.value].title} | James Henry Portfolio`,
-    themeColor: [{
-      content: store.posts[index.value].color.hex,
-      media: '(prefers-color-scheme: light)',
-    },
-    {
-      content: store.posts[index.value].color.hex,
-      media: '(prefers-color-scheme: dark)',
-    }],
-    description: () => store.posts[index.value].description,
-    ogUrl: () => `https://jameshenry.site/project/${id.value}`,
-    ogTitle: () => `${store.posts[index.value].title} | James Henry Portfolio`,
-    ogDescription: () => store.posts[index.value].description,
-    ogImage: () => store.posts[index.value].thumbnail.asset.url,
-    twitterCard: 'summary_large_image',
-    twitterCreator: '@jamespurnama1',
-    twitterSite: '@jamespurnama1',
-  });
-
   if (import.meta.client) {
     /**
      * Marquee
@@ -333,6 +331,7 @@ function init() {
           0
         )
       marquee02.play()
+    })
 
     /**
      * Carousel
@@ -341,7 +340,7 @@ function init() {
       const tl = gsap
         .timeline({ paused: true })
         .to(carousel.value, {
-          x: () => -carouselWidth.value + horizontalWidth.value,
+          x: () => -carouselWidth() + horizontalWidth.value,
           ease: 'power1.inOut',
         })
         .to(
@@ -356,7 +355,7 @@ function init() {
         scroller: '#__nuxt',
         trigger: '.horizontal',
         start: 'top 20%',
-        end: () => `+=${carouselWidth.value - 5}`,
+        end: () => `+=${carouselWidth() - 5}`,
         scrub: 1,
         // markers: true,
         pin: '.content',
@@ -424,7 +423,7 @@ onUnmounted(() => {
     ; (document.querySelector('#__nuxt') as HTMLDivElement).style.overflowY =
       'initial'
   }
-  window.removeEventListener('resize', checkMarquee02, true)
+  mm.revert()
   // store.$patch({
   //   loadWorks: 0,
   // })

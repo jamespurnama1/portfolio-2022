@@ -22,6 +22,7 @@ export default defineNuxtConfig({
     useCdn: process.env.NODE_ENV === 'production',
   },
   image: {
+    provider: 'sanity',
     sanity: {
       projectId: process.env.NUXT_SANITY_PROJECT_ID,
       dataset: process.env.NUXT_SANITY_DATASET,

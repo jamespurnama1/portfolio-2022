@@ -133,8 +133,29 @@ watch(fullReady, () => {
 svg.lottieLoading {
   max-width: 6em;
 }
+</style>
 
-<style lang="scss" scoped>
+<style scoped>
+@keyframes next {
+  from {
+    mask-position: 0 50%;
+  }
+
+  to {
+    mask-position: 5.74em 50%;
+  }
+}
+
+@keyframes next-desktop {
+  from {
+    mask-position: 0 50%;
+  }
+
+  to {
+    mask-position: 15.31em 50%;
+  }
+}
+
 .loading {
   position: fixed;
   z-index: 1000;
@@ -165,10 +186,10 @@ svg.lottieLoading {
     overflow: hidden;
 
     &:last-child {
-      // same width as the arrow button inside
+      /* same width as the arrow button inside */
       width: 5.74em;
 
-      @include min-media(desktop) {
+      @media only screen and (width >= 80em) {
         width: 15.31em;
       }
     }
@@ -176,7 +197,7 @@ svg.lottieLoading {
     h2 {
       font-size: 3em;
 
-      @include min-media(desktop) {
+      @media only screen and (width >= 80em) {
         font-size: 8em;
       }
     }
@@ -194,34 +215,18 @@ svg.lottieLoading {
     padding: 0;
     cursor: pointer;
 
-    @keyframes next {
-      from {
-        mask-position: 0 50%;
-      }
-
-      to {
-        mask-position: 5.74em 50%;
-      }
-    }
-
-    @include min-media(desktop) {
+    @media only screen and (width >= 80em) {
       height: 8em;
       width: 15.31em;
       mask-size: 15.31em 8em;
-
-      @keyframes next {
-        from {
-          mask-position: 0 50%;
-        }
-
-        to {
-          mask-position: 15.31em 50%;
-        }
-      }
     }
 
     &:hover {
       animation: next 0.5s;
+
+      @media only screen and (width >= 80em) {
+        animation-name: next-desktop;
+      }
     }
 
     div {

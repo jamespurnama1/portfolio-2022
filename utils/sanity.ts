@@ -66,49 +66,43 @@ const queries = {
   _rev,
   title,
   "image": {
-      "asset": image.asset->{
+    "asset": image.asset->{
       _id,
-      _createdAt,
-      _updatedAt,
-      _rev,
-      title,
-      "image": {
-          "asset": image.asset->{
-          _id,
-          url,
-          originalFilename,
-          size
-        }
-      },
-      awards[] {
-        "icon": {
-          "asset": icon.asset->{
-            _id,
-            url,
-            originalFilename,
-            size
-          }
-        },
-        gold,
-        silver,
-        bronze,
-        crystal,
-        issuer,
-        index
-      },
-      socials,
-      bio,
-      skills,
-      "resume": {
-        "asset": resume.asset->{
-          _id,
-          url,
-          originalFilename,
-          size
-        }
+      url,
+      originalFilename,
+      size
+    }
+  },
+  awards[] {
+    "icon": {
+      "asset": icon.asset->{
+        _id,
+        url,
+        originalFilename,
+        size
       }
-    } | order(_createdAt asc)[0]
-  }`,
+    },
+    gold,
+    silver,
+    bronze,
+    crystal,
+    issuer,
+    index
+  },
+  socials,
+  bio,
+  languages,
+  skills,
+  "resume": {
+    "asset": resume.asset->{
+      _id,
+      url,
+      originalFilename,
+      size
+    }
+  }
+} | order(_createdAt asc)[0]
+}`,
 }
 
 export async function fetchSanity<T extends 'landing' | 'about'>(
