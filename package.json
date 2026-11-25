@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 nuxt dev --https --ssl-cert localhost.pem --ssl-key localhost-key.pem",
+    "dev": "nuxt dev",
     "build": "nuxt build",
     "start": "nuxt start",
     "generate": "nuxt generate"
@@ -15,7 +15,7 @@
     "@sanity/types": "^3.72.1",
     "@types/splitting": "^1.0.6",
     "@types/three": "^0.137.0",
-    "@vesp/nuxt-fontawesome": "^1.2.0",
+    "@vesp/nuxt-fontawesome": "^1.2.1",
     "@vite-pwa/nuxt": "^0.10.6",
     "graphql-tag": "^2.12.5",
     "gsap": "^3.8.0",

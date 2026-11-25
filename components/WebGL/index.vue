@@ -59,7 +59,7 @@
           </video>
           <!-- work.thumbnail.asset.url -->
           <img v-for="(work, index) in posts.slice(1)" :key="index" crossorigin="anonymous" class="cardImg"
-            src="https://cdn.sanity.io/files/rdnxsacz/production/d0b7c8a20f4359f26f1d76d0b4068bebb1ca8366.jpg"
+            :src="work.thumbnail.asset.url"
             :alt="work.title" @load="thumbLoaded()" />
         </span>
       </div>
