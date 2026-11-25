@@ -1,5 +1,5 @@
 <template>
-  <div class="loading fixed z-[1000] w-screen h-safe-height flex justify-center items-center flex-col-reverse">
+  <div class="loading fixed z-1000 w-screen h-safe-height flex justify-center items-center flex-col-reverse">
     <transition name="fade">
       <div v-if="!fullReady || (routePath !== '/' && checkReady < 100)" ref="anim"
         class="anim absolute flex flex-col-reverse items-center justify-center m-auto text-black dark:text-white">
@@ -132,108 +132,5 @@ watch(fullReady, () => {
 /* stylelint-disable-next-line selector-class-pattern */
 svg.lottieLoading {
   max-width: 6em;
-}
-</style>
-
-<style scoped>
-@keyframes next {
-  from {
-    mask-position: 0 50%;
-  }
-
-  to {
-    mask-position: 5.74em 50%;
-  }
-}
-
-@keyframes next-desktop {
-  from {
-    mask-position: 0 50%;
-  }
-
-  to {
-    mask-position: 15.31em 50%;
-  }
-}
-
-.loading {
-  position: fixed;
-  z-index: 1000;
-  width: 100vw;
-  height: 100vh;
-  height: calc(100vh - env(safe-area-inset-bottom));
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column-reverse;
-
-  .anim {
-    position: absolute;
-    display: flex;
-    flex-flow: column-reverse;
-    margin: auto;
-    align-items: center;
-    justify-content: center;
-
-    p {
-      margin-top: 2em;
-      color: var(--color);
-    }
-  }
-
-  .content-item {
-    position: relative;
-    overflow: hidden;
-
-    &:last-child {
-      /* same width as the arrow button inside */
-      width: 5.74em;
-
-      @media only screen and (width >= 80em) {
-        width: 15.31em;
-      }
-    }
-
-    h2 {
-      font-size: 3em;
-
-      @media only screen and (width >= 80em) {
-        font-size: 8em;
-      }
-    }
-  }
-
-  button {
-    height: 3em;
-    width: 5.74em;
-    border: none;
-    mask-repeat: repeat-x;
-    mask-position: 0 50%;
-    mask-size: 5.74em 3em;
-    mask-image: url("@/assets/arrow.svg");
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
-
-    @media only screen and (width >= 80em) {
-      height: 8em;
-      width: 15.31em;
-      mask-size: 15.31em 8em;
-    }
-
-    &:hover {
-      animation: next 0.5s;
-
-      @media only screen and (width >= 80em) {
-        animation-name: next-desktop;
-      }
-    }
-
-    div {
-      width: 100%;
-      height: 100%;
-      background-color: var(--color);
-    }
-  }
 }
 </style>

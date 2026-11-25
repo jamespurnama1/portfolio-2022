@@ -33,7 +33,8 @@ export interface Post extends SanityDocument {
 export interface CarouselItem {
   _key: string
   alt: string | null
-  url: string
+  image: string | null
+  video: string | null
 }
 
 export interface About extends SanityDocument {

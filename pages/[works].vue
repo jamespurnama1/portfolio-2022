@@ -20,7 +20,7 @@
     </div>
     <NuxtLink to="/">
       <button
-        class="absolute right-0 top-0 md:top-4 md:right-4 z-30 mix-blend-difference flex items-center justify-center border-solid border rounded-2xl bg-transparent transition-all duration-500 ease-in-out pointer-events-auto cursor-pointer border-white text-white hover:text-white hover:bg-white pt-2 pb-[0.15rem] px-4 m-5"
+        class="absolute right-0 top-0 md:top-4 md:right-4 z-[60] mix-blend-difference flex items-center justify-center border-solid border rounded-2xl bg-transparent transition-all duration-500 ease-in-out pointer-events-auto cursor-pointer border-white text-white hover:text-white hover:bg-white pt-2 pb-[0.15rem] px-4 m-5"
         v-posthog-capture="'go back'" aria-label="Back">
         <p>← Back</p>
       </button>
@@ -28,69 +28,78 @@
     <div ref="content" class="ml-12 w-[calc(100vw-2.5em)]">
       <client-only>
         <template v-if="post">
-          <div class="top">
-            <video v-if="heroVideo" muted autoplay loop playsinline preload="auto" class="hero" :src="heroVideo" />
-            <img v-else-if="post.thumbnailImage" class="hero" :src="post.thumbnailImage" :alt="post.title" />
-            <div class="info">
-              <p v-if="post.description" class="desc">
+          <div class="relative top-0 -left-12 w-screen overflow-hidden z-10 mb-4">
+            <video v-if="heroVideo" muted autoplay loop playsinline preload="auto"
+              class="hero w-full max-h-[56.3vw] h-auto object-cover top-0 -z-10" :src="heroVideo" />
+            <img v-else-if="post.thumbnailImage" class="hero w-full max-h-[56.3vw] h-auto object-cover top-0 -z-10"
+              :src="post.thumbnailImage" :alt="post.title" />
+          </div>
+          <div class="pin ml-4 mr-8 md:mx-16 relative z-50 max-w-6xl lg:mx-auto">
+            <div
+              class="info flex relative items-center flex-col md:mx-16 ml-4 mr-8 mb-2 md:mb-4 md:flex-row md:items-start gap-4 md:gap-12 md:justify-between pointer-events-none text-black dark:text-white max-w-6xl">
+              <!-- description -->
+              <p v-if="post.description" class="relative lg:w-[80ch] lg:max-w-[50vw]">
                 {{ post.description }}
               </p>
-              <div class="details">
-                <div class="grid">
+              <!-- Tools / Role / Link / Year / Type -->
+              <div class="flex flex-col md:gap-8 w-full md:w-[initial]">
+                <div class="grid grid-rows-[2fr_1fr_2fr] grid-cols-[minmax(1fr, 2fr)_1fr] md:gap-2 mb-0">
+                  <div class="row-span-2">
+                    <h4 class="font-bold">tools used</h4>
+                    <p>{{ (post.tools || []).join(', ') }}</p>
+                  </div>
+                  <div class="col-start-2" :class="[post.link ? '' : 'row-span-2']">
+                    <h4 class="font-bold">role</h4>
+                    <p>{{ (post.role || []).join(', ') }}</p>
+                  </div>
+                  <NuxtLink v-if="post.link" class="pointer-events-auto col-start-2 self-center" external
+                    :to="post.link">
+                    <button class="external font-bold text-black dark:text-white hover:underline"
+                      v-posthog-capture="'visit website'" :aria-label="`visit ${post.title}`">
+                      <h4>
+                        visit website
+                        <font-awesome class="icon" icon="arrow-up-right-from-square" />
+                      </h4>
+                    </button>
+                  </NuxtLink>
                   <div>
-                    <h4>tools used</h4>
-                    <p>
-                      {{ (post.tools || []).join(',') }}
-                    </p>
+                    <h4 class="font-bold">type</h4>
+                    <p>{{ post.type }}</p>
                   </div>
                   <div>
-                    <h4>role</h4>
-                    <p>
-                      {{ (post.role || []).join(',') }}
-                    </p>
-                  </div>
-                  <div>
-                    <h4>type</h4>
-                    <p>
-                      {{ post.type }}
-                    </p>
-                  </div>
-                  <div>
-                    <h4>year</h4>
-                    <p>
-                      {{ post.year }}
-                    </p>
+                    <h4 class="font-bold">year</h4>
+                    <p>{{ post.year }}</p>
                   </div>
                 </div>
-                <NuxtLink v-if="post.link" external :to="post.link">
-                  <button class="external" :aria-label="`visit ${post.title}`">
-                    <h4>
-                      visit website
-                      <font-awesome class="icon" icon="arrow-up-right-from-square" />
-                    </h4>
-                  </button>
-                </NuxtLink>
               </div>
             </div>
-          </div>
-          <div class="pin">
-            <div v-if="post.carousel?.length" ref="horizontal" class="horizontal">
-              <div ref="carousel" class="slide">
-                <span v-for="item in post.carousel" :key="item._key">
-                  <img :src="item.url" :alt="item.alt || post.title" />
+            <!-- Carousel (only rendered when the post has one) -->
+            <div v-if="post.carousel?.length" ref="horizontal"
+              class="pointer-events-none pl-4 pr-8 md:px-16 mask-left-right left-0 w-full">
+              <div ref="carousel" class="flex overflow-x-hidden w-fit h-[50vh]">
+                <span class="h-full mr-4 select-none last:mr-0" v-for="item in post.carousel" :key="item._key">
+                  <video v-if="item.video" class="h-full w-auto object-contain max-w-[80vw]" ref="carouselVid" muted
+                    autoplay loop playsinline preload="auto" :src="item.video" />
+                  <img v-else-if="item.image" class="h-full w-auto object-contain max-w-[80vw]" :src="item.image"
+                    :alt="item.alt || post.title" />
                 </span>
               </div>
             </div>
-            <template v-for="item in sections" :key="item._key">
-              <div class="pinned" :class="{ attached: item.attachToTop }">
-                <h3 v-if="item.headline">{{ item.headline }}</h3>
-                <p v-if="item.body">{{ item.body }}</p>
-                <video v-if="item.video" muted autoplay loop playsinline preload="auto" :src="item.video" />
-                <img v-else-if="sectionImage(item)" :src="sectionImage(item)!" :alt="item.caption || item.headline || post.title">
+            <!-- Contents -->
+            <div class="flex flex-col gap-4 md:gap-12"
+              :class="{ 'pt-[calc(50vh+16px)] md:pt-[calc(25vh+48px)]': post.carousel?.length }">
+              <div class="pinned flex flex-col text-black dark:text-white" v-for="item in sections" :key="item._key"
+                :class="{ '-mt-4 md:-mt-12': item.attachToTop }">
+                <h3 class="font-bold text-2xl" v-if="item.headline">{{ item.headline }}</h3>
+                <video v-if="item.video" class="w-full max-h-[80vh] object-contain" muted autoplay loop playsinline preload="auto" :src="item.video" />
+                <img v-else-if="sectionImage(item)" class="w-full max-h-[80vh] object-contain" :src="sectionImage(item)!"
+                  :alt="item.caption || item.headline || post.title">
+                <p class="mt-3 mb-2 md:max-w-[75ch]" v-if="item.body">{{ item.body.replace(/\s(?=\S*$)/, '&nbsp;') }}</p>
               </div>
-            </template>
-            <div class="spacer">
-              <h4 @click="next">
+            </div>
+            <!-- Next Project -->
+            <div class="h-[40vh] flex flex-col justify-center items-center text-black dark:text-white">
+              <h4 class="cursor-pointer pointer-events-auto hover:underline" @click="next">
                 <font-awesome class="icon arrowDown" icon="arrow-down" />
                 next project: {{ nextWorkTitle.toLowerCase() }}
               </h4>
@@ -173,7 +182,7 @@ const len = ref(0);
 // Resolves once every image/video in the page has loaded (or failed), so one
 // broken asset can't keep the page hidden.
 async function waitForMedia() {
-  await waitUntil(() => document.querySelector('#container2 .top'))
+  await waitUntil(() => document.querySelector('#container2 .pin'))
   await nextTick()
   const els = Array.from(
     document.querySelectorAll<HTMLImageElement | HTMLVideoElement>(
@@ -343,24 +352,15 @@ function init() {
           x: () => -carouselWidth() + horizontalWidth.value,
           ease: 'power1.inOut',
         })
-        .to(
-          '.background',
-          {
-            opacity: 0.2,
-          },
-          '<'
-        )
+        .to('.background', { opacity: 0.2 }, '<')
 
       ScrollTrigger.create({
-        scroller: '#__nuxt',
-        trigger: '.horizontal',
+        trigger: horizontal.value,
         start: 'top 20%',
-        end: () => `+=${carouselWidth() - 5}`,
-        scrub: 1,
-        // markers: true,
-        pin: '.content',
+        end: () => `+=${carouselWidth() - 5}px`,
+        scrub: true,
+        pin: true,
         pinType: 'fixed',
-        pinSpacing: false,
         invalidateOnRefresh: true,
         animation: tl,
       })
@@ -402,10 +402,15 @@ function init() {
   }
 }
 
+// `body` is the scroll container, and its scroll events never reach `window`,
+// which is where ScrollTrigger listens.
+const syncScrollTrigger = () => ScrollTrigger.update()
+
 onMounted(() => {
   gsap.registerPlugin(ScrollTrigger);
   pushTo();
   document.documentElement.style.overflowY = 'scroll'
+  document.body.addEventListener('scroll', syncScrollTrigger, { passive: true })
 });
 
 router.afterEach(() => {
@@ -413,6 +418,7 @@ router.afterEach(() => {
 })
 
 onUnmounted(() => {
+  document.body.removeEventListener('scroll', syncScrollTrigger)
   ScrollTrigger.killAll();
   gsap.to('.background', {
     opacity: 1,
@@ -420,8 +426,7 @@ onUnmounted(() => {
   // When moving between projects the next page may already be mounted;
   // only restore scrolling if no project page is left.
   if (!document.querySelector('#container2')) {
-    ; (document.querySelector('#__nuxt') as HTMLDivElement).style.overflowY =
-      'initial'
+    document.documentElement.style.overflowY = ''
   }
   mm.revert()
   // store.$patch({

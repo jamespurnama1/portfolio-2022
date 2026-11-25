@@ -17,10 +17,11 @@ const queries = {
   "thumbnailVideo": thumbnail.asset->url,
   "thumbnailImage": thumbnailImage.asset->url,
   "heroVideo": heroMedia.asset->url,
-  "carousel": carousel[defined(image.asset->url)] {
+  "carousel": carousel[defined(image.asset->url) || defined(video.asset->url)] {
     _key,
     alt,
-    "url": image.asset->url
+    "image": image.asset->url,
+    "video": video.asset->url
   },
   "content": content[] {
     _key,

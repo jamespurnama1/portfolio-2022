@@ -91,7 +91,7 @@
             @click="!attractTo ? clicked(attractTo) : null">
             {{ posts[attractTo].title.toLowerCase() }}
           </h2>
-          <p v-if="attractTo" class="types">
+          <p v-if="attractTo" class="types leading-none! text-sm md:text-base 2xl:text-3xl">
             {{ posts[attractTo].role?.[0] }}
             <span v-if="windowWidth > 600">
               <br />
@@ -247,6 +247,7 @@ function lightTheme() {
     grain.material.uniforms.needsUpdate = true
   }
   store.$patch({ dark: false })
+  document.documentElement.dataset.theme = 'light'
 }
 
 function darkTheme() {
@@ -269,6 +270,7 @@ function darkTheme() {
     grain.material.uniforms.needsUpdate = true
   }
   store.$patch({ dark: true })
+  document.documentElement.dataset.theme = 'dark'
 }
 
 function checkProjectTheme() {
@@ -556,13 +558,16 @@ function raf() {
       // position easing
       const tgtPz = Math.max(
         Math.min(
-          (960 / window.innerWidth) * -2.5 - 0.01 * Math.abs(attractTo.value - i),
+          (960 / window.innerWidth) * -2.5 -
+            0.4 * Math.min(Math.abs(position - i), 3),
           9
         ),
         -9
       );
       const tgtPx = 2 * 0.8 - 1;
-      const tgtPy = -0.6 * (i - position);
+      // open a small gap above and below the active card
+      const tgtPy =
+        -0.6 * (i - position) - 0.25 * gsap.utils.clamp(-1, 1, i - position);
       currentPos[i].z = lerp(currentPos[i].z, tgtPz, easing);
       currentPos[i].x = lerp(currentPos[i].x, tgtPx, easing);
       currentPos[i].y = lerp(currentPos[i].y, tgtPy, easing);
@@ -677,80 +682,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.switcher {
-  z-index: 20;
-  position: fixed;
-  background: transparent;
-  padding: 0;
-  margin: 0;
-  top: 0;
-  left: 0;
-  border: 0;
-  cursor: pointer;
-
-  .icon {
-    margin: 3px;
-    transition: 0.5s ease;
-    position: absolute;
-    left: 0;
-    top: 0;
-    font-size: 1.5em;
-    height: 1em;
-    width: auto;
-    color: var(--bg);
-  }
-
-  .triangle {
-    transition: 0.5s ease;
-    height: 0;
-    width: 0;
-    border-style: solid;
-    border-width: 0 0 3.5em 3.5em;
-    border-color: transparent transparent transparent var(--color);
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .switcher:hover {
-      .triangle {
-        border-width: 0 0 5em 5em;
-      }
-
-      .icon {
-        transform: scale(1.5) translate(5px, 5px);
-      }
-    }
-  }
-
-  span {
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-}
-
-.background,
-.container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  height: calc(100vh - env(safe-area-inset-bottom));
-  z-index: -1;
-  pointer-events: none;
-  overflow: hidden;
-  opacity: 0;
-
-  canvas {
-    width: 100%;
-    height: 100%;
-  }
-}
-
-.container {
-  z-index: 50;
-}
-
 .over {
   position: absolute;
   display: flex;
@@ -768,23 +699,6 @@ onUnmounted(() => {
     max-width: 80%;
     max-height: 80%;
   }
-
-  .dim {
-    position: absolute;
-    background-color: black;
-    opacity: 0.9;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-  }
-}
-
-.clip {
-  position: absolute;
-  width: 100vw;
-  height: 100vh;
-  height: calc(100vh - env(safe-area-inset-bottom));
-  top: 0;
 }
 
 #wrap {
@@ -804,91 +718,6 @@ onUnmounted(() => {
 
   span {
     display: none;
-  }
-}
-
-ul {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  right: 2em;
-  z-index: 100;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  cursor: pointer;
-
-  li {
-    display: flex;
-    flex-direction: row-reverse;
-    align-items: center;
-    opacity: 0.3;
-
-    .bullet {
-      height: 1em;
-      width: 0.25em;
-      margin: 0.5em;
-      border-radius: 1em / 1em;
-      background-color: var(--color);
-      transition: transform 0.5s ease, color 0.5s ease, margin 0.5s ease;
-    }
-
-    p {
-      font-size: 1em;
-      text-align: right;
-      line-height: 1.5em;
-    }
-
-    &.active {
-      opacity: 1;
-
-      .bullet {
-        transform: scaleY(1.5);
-      }
-
-      .active-length {
-        transform: scaleY(2.5);
-        margin: 2em 0.5em;
-      }
-    }
-  }
-}
-
-.title {
-  color: var(--color);
-  position: absolute;
-  left: 5%;
-  top: 47%;
-  text-align: right;
-  z-index: 5;
-  max-width: 20%;
-  cursor: pointer;
-
-  @media only screen and (width >= 80em) {
-    left: 25vw;
-  }
-
-  h2 {
-    font-size: 20px;
-    line-height: 20px;
-
-    @media only screen and (width >= 37.5em) {
-      font-size: 50px;
-      line-height: 40px;
-    }
-
-    @media only screen and (width >= 120em) {
-      font-size: 70px;
-      line-height: 60px;
-    }
-  }
-
-  p {
-    font-size: 1em;
-
-    @media only screen and (width >= 37.5em) {
-      font-size: 1.2em;
-    }
   }
 }
 </style>

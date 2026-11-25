@@ -60,6 +60,7 @@ html {
   -webkit-font-smoothing: antialiased;
   box-sizing: border-box;
   position: fixed;
+  color: var(--color);
   background-color: var(--bg);
   overflow: hidden;
 }

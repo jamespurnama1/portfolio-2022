@@ -2,11 +2,11 @@
   <div class="transition-all duration-500" :class="[opened ? 'dark:bg-black/50 bg-white/50' : '']">
     <section class="pointer-events-none z-40 relative p-5 h-safe-height w-screen">
       <div
-        class="lottie pointer-events-auto cursor-pointer w-64 max-h-28 sm:w-80 sm:max-h-40 -ml-10 sm:-ml-16 md:w-[27rem] md:max-h-52 2xl:w-[42rem]"
+        class="lottie pointer-events-auto cursor-pointer w-64 max-h-28 sm:w-80 sm:max-h-40 -ml-10 sm:-ml-16 md:w-108 md:max-h-52 2xl:w-2xl"
         @click="about()" @mouseenter="windowWidth > 600 ? hover() : null"
         @mouseleave="windowWidth > 600 ? leave() : null" />
       <button
-        class="flex items-center justify-center border-solid border rounded-2xl bg-transparent transition-all duration-500 ease-in-out pointer-events-auto cursor-pointer dark:border-white border-black dark:text-white text-black dark:hover:text-black hover:text-white dark:hover:bg-white hover:bg-black py-2 px-4 pb-1 m-5 mb-safe-b-margin fixed bottom-8 md:bottom-0 left-0"
+        class="flex items-center justify-center border-solid border rounded-2xl bg-transparent transition-all duration-500 ease-in-out pointer-events-auto cursor-pointer dark:border-white border-black dark:text-white text-black dark:hover:text-black hover:text-white dark:hover:bg-white hover:bg-black pt-2.25 pb-0.75 px-4 m-5 mb-safe-b-margin fixed bottom-8 md:bottom-0 left-0"
         v-posthog-capture="'about'" @click="about()" :aria-label="opened ? 'Home' : 'About'">
         <transition name="fade" mode="out-in">
           <p class="leading-none" v-if="!opened">about</p>
@@ -17,7 +17,7 @@
     <!-- About -->
     <transition name="fade">
       <section v-show="opened"
-        class="abt absolute pointer-events-auto top-0 right-0 transition-all duration-500 ease-in-out z-10 grid gap-5 lg:gap-5 grid-rows-[0.35fr_20px_1fr] grid-cols-3 md:grid-cols-[20.5rem_1fr] md:grid-rows-[13rem_minmax(0,1.5fr)_minmax(0,2fr)] w-full !h-safe-height lg:pr-20 pb-20 md:pb-5 p-5">
+        class="abt absolute pointer-events-auto top-0 right-0 transition-all duration-500 ease-in-out z-10 grid gap-5 lg:gap-5 grid-rows-[0.35fr_20px_1fr] grid-cols-3 md:grid-cols-[20.5rem_1fr] md:grid-rows-[13rem_minmax(0,1.5fr)_minmax(0,2fr)] w-full h-safe-height! lg:pr-20 pb-20 md:pb-5 p-5">
         <!-- image -->
         <div class="md:row-start-2 md:col-start-1 col-start-3 block ml-auto top-12 right-12">
           <NuxtImg provider="sanity" sizes="50vw md:75vw lg:100vw" :modifiers="{ fit: 'crop' }"
