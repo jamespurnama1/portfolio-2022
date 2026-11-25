@@ -21,74 +21,76 @@
     </NuxtLink>
     <div class="content">
       <client-only>
-        <div class="top">
-          <video v-if="posts" muted="true" autoplay loop playsinline preload="true" class="hero" :src="posts[index].thumbnail.asset.url" />
-          <!-- <img v-else-if="hero" class="hero" :src="hero.imgix_url" /> -->
-          <div class="info">
-            <p v-if="data.desc" class="desc">
-              {{ posts[index].description }}
-            </p>
-            <div class="details">
-              <div class="grid">
-                <div>
-                  <h4>tools used</h4>
-                  <p>
-                    {{ posts[index].tools.map(String).join(',') }}
-                  </p>
+        <template v-if="post">
+          <div class="top">
+            <video v-if="heroVideo" muted autoplay loop playsinline preload="auto" class="hero" :src="heroVideo" />
+            <img v-else-if="post.thumbnailImage" class="hero" :src="post.thumbnailImage" :alt="post.title" />
+            <div class="info">
+              <p v-if="post.description" class="desc">
+                {{ post.description }}
+              </p>
+              <div class="details">
+                <div class="grid">
+                  <div>
+                    <h4>tools used</h4>
+                    <p>
+                      {{ (post.tools || []).join(',') }}
+                    </p>
+                  </div>
+                  <div>
+                    <h4>role</h4>
+                    <p>
+                      {{ (post.role || []).join(',') }}
+                    </p>
+                  </div>
+                  <div>
+                    <h4>type</h4>
+                    <p>
+                      {{ post.type }}
+                    </p>
+                  </div>
+                  <div>
+                    <h4>year</h4>
+                    <p>
+                      {{ post.year }}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4>role</h4>
-                  <p>
-                    {{ posts[index].role.map(String).join(',') }}
-                  </p>
-                </div>
-                <div>
-                  <h4>type</h4>
-                  <p>
-                    {{ posts[index].type }}
-                  </p>
-                </div>
-                <div>
-                  <h4>year</h4>
-                  <p>
-                    {{ posts[index].year }}
-                  </p>
-                </div>
+                <NuxtLink v-if="post.link" external :to="post.link">
+                  <button class="external" :aria-label="`visit ${post.title}`">
+                    <h4>
+                      visit website
+                      <font-awesome class="icon" icon="arrow-up-right-from-square" />
+                    </h4>
+                  </button>
+                </NuxtLink>
               </div>
-              <NuxtLink external :to="data.link">
-                <button v-if="posts[index].link" class="external" :aria-label="`visit ${posts[index].title}`">
-                  <h4>
-                    visit website
-                    <font-awesome class="icon" icon="arrow-up-right-from-square" />
-                  </h4>
-                </button>
-              </NuxtLink>
             </div>
           </div>
-        </div>
-        <div class="pin">
-          <div ref="horizontal" class="horizontal">
-            <div v-if="car.value.length" ref="carousel" class="slide">
-              <span v-for="media in posts[index].carousel" :key="media.asset._id">
-                <video v-if="media.asset.url.slice(-4) === '.mp4' && media.asset.url.slice(-4) === '.webm'"
-                  ref="carouselVid" muted autoplay loop playsinline preload=true :src="media.asset.url" />
-                <img v-else :src="media.asset.url" :alt="media.alt" />
-              </span>
+          <div class="pin">
+            <div v-if="post.carousel?.length" ref="horizontal" class="horizontal">
+              <div ref="carousel" class="slide">
+                <span v-for="item in post.carousel" :key="item._key">
+                  <img :src="item.url" :alt="item.alt || post.title" />
+                </span>
+              </div>
+            </div>
+            <template v-for="item in sections" :key="item._key">
+              <div class="pinned" :class="{ attached: item.attachToTop }">
+                <h3 v-if="item.headline">{{ item.headline }}</h3>
+                <p v-if="item.body">{{ item.body }}</p>
+                <video v-if="item.video" muted autoplay loop playsinline preload="auto" :src="item.video" />
+                <img v-else-if="sectionImage(item)" :src="sectionImage(item)!" :alt="item.caption || item.headline || post.title">
+              </div>
+            </template>
+            <div class="spacer">
+              <h4 @click="next">
+                <font-awesome class="icon arrowDown" icon="arrow-down" />
+                next project: {{ nextWorkTitle.toLowerCase() }}
+              </h4>
             </div>
           </div>
-          <!-- <div v-if="data.value" class="pinned" v-html="data.value.content"></div> -->
-          <div class="pinned" v-for="item in posts[index].content">
-            <h3 v-if="item.show_headline">{{item.headline}}</h3>
-            <p>{{item.body}}</p>
-            <img :src="item.media.asset.url" :alt="item.caption">
-          </div>
-          <div class="spacer">
-            <h4 @click="next">
-              <font-awesome class="icon arrowDown" icon="arrow-down" />
-              next project: {{ nextWorkTitle.toLowerCase() }}
-            </h4>
-          </div>
-        </div>
+        </template>
       </client-only>
     </div>
   </div>
@@ -98,8 +100,8 @@
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useStore } from '~/store'
+import type { Content, Post } from '~/types/queries'
 
-const config = useRuntimeConfig()
 const width = ref(window.innerWidth)
 const noBoxes = 25
 const route = useRoute()
@@ -120,125 +122,79 @@ const waitUntil = (condition) => {
 /**
  * Get Data
  */
-const data = reactive({
-  title: '',
-  value: null as any,
-  desc: '',
-  tools: '',
-  type: '',
-  role: '',
-  year: 0,
-  link: '',
-})
-const id = ref('')
-// const dat = ref(false)
-const media = reactive({ value: [] as any[] })
-const car = reactive({ value: [] as any[] })
-const hero = ref(null as any)
-
+const data = reactive({ title: '' })
+const post = ref<Post | null>(null)
+const heroVideo = computed(
+  () => post.value?.heroVideo || post.value?.thumbnailVideo || null
+)
+// Skip sections that have nothing to show (e.g. a deleted asset)
+const sections = computed(() =>
+  (post.value?.content || []).filter(
+    (item) => item.image || item.imageLight || item.video || item.headline || item.body
+  )
+)
+// Light-theme artwork is used when the site is in light mode
+function sectionImage(item: Content) {
+  return (!store.dark && item.imageLight) || item.image || item.imageLight
+}
 const load = ref(0)
 const index = ref(1)
-
-// const { onResult, onError } = useQuery(
-//   getObject,
-//   {
-//     bucket_slug: config.public.bucketSlug,
-//     read_key: config.public.readKey,
-//     object_id: id,
-//     folder: routePath.value.substring(1),
-//   },
-//   {
-//     prefetch: true,
-//   }
-// )
 
 const nextWork = ref('')
 const nextWorkTitle = ref('')
 
+// Resolves once every image/video in the page has loaded (or failed), so one
+// broken asset can't keep the page hidden.
+async function waitForMedia() {
+  await waitUntil(() => document.querySelector('#container2 .top'))
+  await nextTick()
+  const els = Array.from(
+    document.querySelectorAll<HTMLImageElement | HTMLVideoElement>(
+      '#container2 img, #container2 video'
+    )
+  )
+  let counter = 0
+  await new Promise<void>((resolve) => {
+    const done = () => {
+      counter++
+      load.value = 100 * (counter / els.length)
+      store.$patch({ loadWorks: load.value })
+      if (counter === els.length) resolve()
+    }
+    if (!els.length) return resolve()
+    els.forEach((el) => {
+      const isImg = el instanceof HTMLImageElement
+      if (isImg ? el.complete : el.readyState >= 2) return done()
+      el.addEventListener(isImg ? 'load' : 'loadeddata', done, { once: true })
+      el.addEventListener('error', done, { once: true })
+    })
+  })
+}
+
 async function pushTo() {
   await waitUntil(() => store.posts.length > 1)
-  const [getID] = store.posts.filter((obj) => {
-    return obj.slug.current === routePath.value.substring(1)
-  })
+  const getID = store.posts.find(
+    (obj) => obj.slug.current === routePath.value.substring(1)
+  )
   if (!getID) {
     showError({ statusCode: 404 })
     navigateTo({ path: '/404' })
-  } else {
-    id.value = getID.slug.current
-    index.value = store.posts.indexOf(getID)
-    nextWork.value =
-      store.posts.length === index.value + 1
-        ? store.posts[1].slug.current
-        : store.posts[index.value + 1].slug.current
-    nextWorkTitle.value =
-      store.posts.length === index.value + 1
-        ? store.posts[1].title
-        : store.posts[index.value + 1].title
-    // onResult((queryResult) => {
-    //   load.value += 10
-    //   store.$patch({
-    //     loadWorks: load.value,
-    //   })
-    if (store.posts) {
-      // data.value = { ...store.posts }
-      data.title = getID.title
-      data.desc = getID.description
-      data.tools = getID.tools.map(String).join(',')
-      data.type = getID.type
-      data.role = getID.role.map(String).join(',')
-      data.year = getID.year
-      if (getID.link) data.link = getID.link
-      // media.value = [...store.posts.media]
-      hero.value = media.value.find((el) => {
-        return el.metadata ? el.metadata.type === 'hero' : null
-      })
-      car.value = media.value.filter(function (el) {
-        return el.metadata ? el.metadata.type === 'carousel' : null
-      })
-
-      nextTick(() => {
-        const imgs = document.images
-        const len = imgs.length
-        let counter = 0
-
-        Array.from(imgs).forEach((img: HTMLImageElement) => {
-          if (img.complete) incrementCounter()
-          else
-            img.addEventListener('load', incrementCounter, { once: true })
-        })
-
-        async function incrementCounter() {
-          counter++
-          load.value = 100 * (counter / len)
-          store.$patch({
-            loadWorks: load.value,
-          })
-          if (counter === len) {
-            // watch(width, () => {
-            //   if (boxWidth.value <= 20 || !horizontalWidth.value || !carouselWidth.value)
-            //     return
-            //   init()
-            // })
-            // console.log(boxWidth.value)
-            await waitUntil(() => store.loaded)
-            await wait(1000)
-            // console.log('start init')
-            init()
-            load.value = 100
-            store.$patch({
-              loadWorks: load.value,
-            })
-          }
-        }
-      })
-    }
-    // })
-
-    // onError((error: any) => {
-    //   showError({ statusCode: error.networkError.statusCode })
-    //   console.error(error)
-    // })
+    return
   }
+  post.value = getID
+  data.title = getID.title
+  index.value = store.posts.indexOf(getID)
+  // skip the reel (index 0) when cycling through projects
+  const next = store.posts[index.value + 1] || store.posts[1]
+  nextWork.value = next.slug.current
+  nextWorkTitle.value = next.title
+
+  await waitForMedia()
+  await waitUntil(() => store.loaded)
+  await wait(1000)
+  init()
+  load.value = 100
+  store.$patch({ loadWorks: load.value })
 }
 
 pushTo()
@@ -380,33 +336,35 @@ function init() {
     /**
      * Carousel
      */
-    const tl = gsap
-      .timeline({ paused: true })
-      .to(carousel.value, {
-        x: () => -carouselWidth.value + horizontalWidth.value,
-        ease: 'power1.inOut',
-      })
-      .to(
-        '.background',
-        {
-          opacity: 0.2,
-        },
-        '<'
-      )
+    if (carousel.value && horizontal.value) {
+      const tl = gsap
+        .timeline({ paused: true })
+        .to(carousel.value, {
+          x: () => -carouselWidth.value + horizontalWidth.value,
+          ease: 'power1.inOut',
+        })
+        .to(
+          '.background',
+          {
+            opacity: 0.2,
+          },
+          '<'
+        )
 
-    ScrollTrigger.create({
-      scroller: '#__nuxt',
-      trigger: '.horizontal',
-      start: 'top 20%',
-      end: () => `+=${carouselWidth.value - 5}`,
-      scrub: 1,
-      // markers: true,
-      pin: '.content',
-      pinType: 'fixed',
-      pinSpacing: false,
-      invalidateOnRefresh: true,
-      animation: tl,
-    })
+      ScrollTrigger.create({
+        scroller: '#__nuxt',
+        trigger: '.horizontal',
+        start: 'top 20%',
+        end: () => `+=${carouselWidth.value - 5}`,
+        scrub: 1,
+        // markers: true,
+        pin: '.content',
+        pinType: 'fixed',
+        pinSpacing: false,
+        invalidateOnRefresh: true,
+        animation: tl,
+      })
+    }
     // gsap.timeline({ paused: true }).to('.arrowUp', {
     //   rotate: '180deg',
     //   scrollTrigger: {
@@ -459,8 +417,12 @@ onUnmounted(() => {
   gsap.to('.background', {
     opacity: 1,
   })
+  // When moving between projects the next page may already be mounted;
+  // only restore scrolling if no project page is left.
+  if (!document.querySelector('#container2')) {
     ; (document.querySelector('#__nuxt') as HTMLDivElement).style.overflowY =
       'initial'
+  }
   window.removeEventListener('resize', checkMarquee02, true)
   // store.$patch({
   //   loadWorks: 0,

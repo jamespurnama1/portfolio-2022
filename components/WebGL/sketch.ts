@@ -118,7 +118,7 @@ export default class Sketch {
     const images = [
       ...(document.querySelectorAll(
         '.cardImg',
-      ) as NodeListOf<HTMLImageElement>),
+      ) as NodeListOf<HTMLImageElement | HTMLVideoElement>),
     ]
 
     images.forEach((_str, index) => {
@@ -132,13 +132,11 @@ export default class Sketch {
       //   t.push(m)
       // })
       // })
-      if (index === 0) {
-        mat.uniforms.texture1.value = new THREE.VideoTexture(
-          document.querySelector('#reel')!,
-        )
-      } else {
-        mat.uniforms.texture1.value = new THREE.Texture(images[index])
-      }
+      const card = images[index]
+      mat.uniforms.texture1.value =
+        card instanceof HTMLVideoElement
+          ? new THREE.VideoTexture(card)
+          : new THREE.Texture(card)
       mat.uniforms.texture1.value.needsUpdate = true
       // mat.uniforms.texture1.wrapS = THREE.ClampToEdgeWrapping
       // mat.uniforms.texture1.wrapT = THREE.RepeatWrapping

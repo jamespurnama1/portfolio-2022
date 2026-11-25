@@ -5,24 +5,32 @@ const queries = {
   "post":  *[_type == "post"] | order(index asc) {
   _id,
   _rev,
-    _type,
+  _type,
   title,
   description,
   type,
   role,
   color,
-  content[] {
-    "media": {
-      "asset": media.asset->{
-        _id,
-        url,
-        originalFilename,
-        size
-      }
-    },
+  theme,
+  aiInvolvement,
+  aiDescription,
+  "thumbnailVideo": thumbnail.asset->url,
+  "thumbnailImage": thumbnailImage.asset->url,
+  "heroVideo": heroMedia.asset->url,
+  "carousel": carousel[defined(image.asset->url)] {
+    _key,
+    alt,
+    "url": image.asset->url
+  },
+  "content": content[] {
+    _key,
     headline,
     body,
-    caption
+    caption,
+    attachToTop,
+    "image": image.asset->url,
+    "imageLight": imageLight.asset->url,
+    "video": video.asset->url
   },
   link,
   slug,
@@ -43,14 +51,6 @@ const queries = {
     crystal,
     issuer,
     index
-  },
-  "thumbnail": {
-    "asset": thumbnail.asset->{
-      _id,
-      url,
-      originalFilename,
-      size
-    }
   },
   _createdAt,
   _updatedAt

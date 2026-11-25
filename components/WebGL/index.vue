@@ -24,9 +24,9 @@
       </div>
     </transition>
     <transition name="fade">
-      <div v-if="showVid && posts[0]?.thumbnail?.asset?.url" class="over">
+      <div v-if="showVid && posts[0]?.thumbnailVideo" class="over">
         <video controls class="reel-overlay">
-          <source :src="posts[0].thumbnail.asset.url" />
+          <source :src="posts[0].thumbnailVideo" />
         </video>
         <div class="dim" @click="hideVideo()" />
       </div>
@@ -53,14 +53,14 @@
         </li>
       </ul>
       <div id="wrap" class="hide">
-        <span v-if="postsWithThumbnails.length > 0">
-          <video v-if="postsWithThumbnails[0]?.thumbnail?.asset?.url" id="reel" class="cardImg" autoplay muted playsinline loop preload="auto" crossorigin="anonymous">
-            <source :src="postsWithThumbnails[0].thumbnail.asset.url" />
-          </video>
-          <!-- work.thumbnail.asset.url -->
-          <img v-for="(work, index) in postsWithThumbnails.slice(1)" :key="work._id" crossorigin="anonymous" class="cardImg"
-            :src="work.thumbnail.asset.url"
-            :alt="work.title" @load="thumbLoaded()" />
+        <span v-if="posts.length > 0">
+          <template v-for="work in posts" :key="work._id">
+            <video v-if="work.thumbnailVideo && !failedVideos[work._id]" class="cardImg" muted playsinline loop
+              preload="auto" crossorigin="anonymous" :src="work.thumbnailVideo" @loadeddata="thumbLoaded()"
+              @error="videoFailed(work)" />
+            <img v-else class="cardImg" crossorigin="anonymous" :src="work.thumbnailImage || undefined"
+              :alt="work.title" @load="thumbLoaded()" @error="thumbLoaded()" />
+          </template>
         </span>
       </div>
       <transition name="fade" mode="out-in">
@@ -76,7 +76,7 @@
             {{ posts[attractTo].title.toLowerCase() }}
           </h2>
           <p v-if="attractTo" class="types">
-            {{ posts[attractTo].role[0] }}
+            {{ posts[attractTo].role?.[0] }}
             <span v-if="windowWidth > 600">
               <br />
               {{ posts[attractTo].type }}
@@ -99,6 +99,7 @@ import { gsap } from 'gsap'
 import Sketch from './sketch'
 import Grain from './grain'
 import { useStore } from '~/store'
+import type { Post } from '~/types/queries'
 
 // const config = useRuntimeConfig()
 const store = useStore()
@@ -118,9 +119,6 @@ const persistent = ref(false)
 const loaded = ref(false)
 const loadedDelay = ref(false)
 const attached = ref(false)
-const postsWithThumbnails = computed(() => 
-  posts.value.filter(p => p?.thumbnail?.asset?.url)
-)
 
 function next() {
   grain.in()
@@ -203,14 +201,17 @@ function lightTheme() {
     '--color': 'black',
     duration: 1,
   })
-  gsap.to(grain.material.uniforms.color3.value, {
-    r: 1,
-    g: 1,
-    b: 1,
-    duration: 1,
-  })
-  grain.material.uniforms.needsUpdate = true
+  if (grain) {
+    gsap.to(grain.material.uniforms.color3.value, {
+      r: 1,
+      g: 1,
+      b: 1,
+      duration: 1,
+    })
+    grain.material.uniforms.needsUpdate = true
+  }
   dark.value = false
+  store.$patch({ dark: false })
 }
 function darkTheme() {
   gsap.to('html', {
@@ -222,14 +223,17 @@ function darkTheme() {
     '--color': 'white',
     duration: 1,
   })
-  gsap.to(grain.material.uniforms.color3.value, {
-    r: 0,
-    g: 0,
-    b: 0,
-    duration: 1,
-  })
-  grain.material.uniforms.needsUpdate = true
+  if (grain) {
+    gsap.to(grain.material.uniforms.color3.value, {
+      r: 0,
+      g: 0,
+      b: 0,
+      duration: 1,
+    })
+    grain.material.uniforms.needsUpdate = true
+  }
   dark.value = true
+  store.$patch({ dark: true })
 }
 function checkProjectTheme() {
   const projectTheme = posts.value.find((el) => {
@@ -259,22 +263,36 @@ let sketch
 const imagesCount = ref(0)
 const load = ref(0)
 const showVid = ref(false)
+// Only the active card's video plays; the others hold their last frame.
+function syncCardPlayback() {
+  document.querySelectorAll('.cardImg').forEach((el, i) => {
+    if (!(el instanceof HTMLVideoElement)) return
+    if (routePath.value === '/' && i === attractTo.value) {
+      el.play().catch(() => {})
+    } else {
+      el.pause()
+    }
+  })
+}
+watch([attractTo, routePath], syncCardPlayback)
+
+// A video that can't be decoded falls back to the post's thumbnail image
+const failedVideos = reactive<Record<string, boolean>>({})
+function videoFailed(work: Post) {
+  if (work.thumbnailImage) failedVideos[work._id] = true
+  else thumbLoaded()
+}
+
 const thumbLoaded = () => {
   imagesCount.value += 1
-  load.value = 90 / (postsWithThumbnails.value.length || 1)
-  const newLoadHome = Math.min(100, store.loadHome + load.value)
+  // fetching accounts for 10%, each card for an equal share of the other 90%
   store.$patch({
-    loadHome: newLoadHome,
+    loadHome: Math.min(100, store.loadHome + 90 / posts.value.length),
   })
 
-  // Once all images load, complete the load stage
-  if (
-    postsWithThumbnails.value.length > 0 &&
-    postsWithThumbnails.value.length === imagesCount.value + 1 &&
-    routePath.value === '/'
-  ) {
-    store.$patch({ loadHome: 100 })
+  if (imagesCount.value === posts.value.length && routePath.value === '/') {
     sketch.handleImages()
+    syncCardPlayback()
   }
 }
 
@@ -301,10 +319,7 @@ const thumbLoaded = () => {
 // store.posts.push(...(data.value.post as Post[]))
 // img.value = [...store.posts]
 // img.value.shift()
-objs = Array(postsWithThumbnails.value.length).fill({ dist: 0 })
-if (routePath.value !== '/' && routePath.value !== '/404') {
-  checkProjectTheme()
-}
+objs = Array(posts.value.length).fill({ dist: 0 })
 
 function dispose() {
   imagesCount.value = 0
@@ -338,7 +353,7 @@ function clicked(index: number) {
   }
 }
 function init() {
-  objs = Array(postsWithThumbnails.value.length - 1).fill({ dist: 0 })
+  objs = Array(posts.value.length).fill({ dist: 0 })
   sketch = new Sketch({
     dom: document.querySelector('.container'),
   })
@@ -351,6 +366,8 @@ function init() {
     window.matchMedia('(prefers-color-scheme: light)').matches
   ) {
     lightTheme()
+  } else if (routePath.value !== '/' && routePath.value !== '/404') {
+    checkProjectTheme()
   }
   raf()
   rafInit.value = true
@@ -534,12 +551,6 @@ const checkReady = computed(() => {
 })
 onMounted(() => {
   init()
-  // Fallback: if loading stalls, complete it after 10 seconds
-  setTimeout(() => {
-    if (store.loadHome < 100) {
-      store.$patch({ loadHome: 100 })
-    }
-  }, 10000)
   if (
     window.matchMedia &&
     window.matchMedia('(prefers-color-scheme: light)').matches

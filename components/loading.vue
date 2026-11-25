@@ -96,13 +96,6 @@ function next() {
 }
 
 onMounted(() => {
-  if (navigator.userAgent.includes('Safari')) {
-    ; (document.querySelector(
-      '.loading button'
-    ) as HTMLButtonElement)!.style.maskSize =
-      window.innerWidth >= 1280 ? '18.79em' : '6.74em 3em'
-  }
-
   window.addEventListener('keydown', (event) => {
     if ((fullReady && event.key === 'Enter') || event.key === 'Space') {
       next()
@@ -189,10 +182,11 @@ svg.lottieLoading {
     overflow: hidden;
 
     &:last-child {
-      width: 4.74em; //5.74em - 1em
+      // same width as the arrow button inside
+      width: 5.74em;
 
       @include min-media(desktop) {
-        width: 12.7em;
+        width: 15.31em;
       }
     }
 
@@ -207,7 +201,7 @@ svg.lottieLoading {
 
   button {
     height: 3em;
-    width: 4.74em;
+    width: 5.74em;
     border: none;
     mask-repeat: repeat-x;
     mask-position: 0 50%;
@@ -229,7 +223,8 @@ svg.lottieLoading {
 
     @include min-media(desktop) {
       height: 8em;
-      mask-size: 15.31em;
+      width: 15.31em;
+      mask-size: 15.31em 8em;
 
       @keyframes next {
         from {
